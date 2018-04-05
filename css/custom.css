@@ -16,6 +16,26 @@ img.placeholder {
     height: 100%;
 }
 
+.option-box {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        max-width: 500px;
+        background-color: white;
+        border: solid red 0px 2px 2px 0px;
+        padding: 20px;
+}
+
+.flavor-town {
+        position: absolute;
+        top: 0px;
+        right: 0px;
+        max-width: 268px;
+        background-color: #bbb;
+        border: solid red 0px 0px 2px 2px;
+        padding: 20px;
+}
+
 .ui-panel .ui-window {
     background-color: #3d1b35;
     border: solid 1px #9e70b2;
