@@ -15,34 +15,40 @@ var tileImg = {
 var tileNum = [tileImg.void, tileImg.vwal, tileImg.hwal, tileImg.room, tileImg.hall, tileImg.tcor, tileImg.bcor];
 
 var map = null;
+var section_map = null;
 var roomlist = [];
+var loaded = false;
 
-function drawRoom(x, y, w, h) {
+function drawRoom(x, y, w, h, rnum) {
         for (var c = x; c < x + w; c++) {
                 for (var r = y; r < y + h; r++) {
                         map[c][r] = 3;
+                        section_map[c][r] = rnum;
                 }
         }
         for (var c = x; c < x + w; c++) {
                 map[c][y] = 2;
-                map[c][y+h] = 2;
+                map[c][y+h-1] = 2;
         }
         for (var r = y; r < y + h; r++) {
                 map[x][r] = 1;
-                map[x+w][r] = 1;
+                map[x+w-1][r] = 1;
         }
         map[x][y] = 5;
-        map[x+w][y] = 5;
-        map[x][y+h] = 6;
-        map[x+w][y+h] = 6;
+        map[x+w-1][y] = 5;
+        map[x][y+h-1] = 6;
+        map[x+w-1][y+h-1] = 6;
 }
 
 function makeMap() {
     map = [];
+    section_map = [];
     for (var i = 0; i < 1000; i++) {
         map[i] = [];
+        section_map[i] = [];
         for (var j = 0; j < 1000; j++) {
-            map[i][j] = Math.floor(Math.random() * 5);
+            map[i][j] = 0;
+            section_map[i][j] = 0;
         }
     }
     rnum = 0
@@ -52,7 +58,7 @@ function makeMap() {
                 w = Math.floor(Math.random() * 20 + 10);
                 y = j + Math.floor(Math.random() * 4 + 1);
                 h = Math.floor(Math.random() * 5 + 5);
-                drawRoom(x, y, w, h);
+                drawRoom(x, y, w, h, rnum);
                 roomlist[rnum] = {
                         x: x,
                         y: y,
@@ -66,12 +72,19 @@ function makeMap() {
     console.log(roomlist[20]);
 }
 
+function describe(c,r) {
+    rnum = section_map[c][r];
+    console.log("c :" + c + "r: " + "rnum: " + rnum)
+    if (rnum != 0) {
+        $(".flavor-town").text(roomlist[rnum].description);
+    }
+}
+
 function drawTile(x, y, tile) {
-    ctx.drawImage(tiles, tile[0], tile[1], 16, 16, x + xoffset, y + yoffset, 16, 16)
+    ctx.drawImage(tiles, tile[0], tile[1], 16, 16, x, y, 16, 16)
 }
 
 $(document).ready(function() {
-    console.log('display.js loaded');
     ctx = document.getElementById('display').getContext('2d');
     ctx.canvas.width = window.innerWidth;
     ctx.canvas.height = window.innerHeight;
@@ -81,10 +94,24 @@ $(document).ready(function() {
         draw();
     });
     tiles.src = 'static/resources/Vanilla_tiles.png';
+    var json = (function () {
+        var json = null;
+        $.ajax({
+            'async': false,
+            'global': false,
+            'url': 'static/static/mp.json',
+            'dataType': "json",
+            'success': function (data) {
+                json = data;
+            }
+        });
+        console.log(json);
+        return json;
+    })(); 
     makeMap();
 });
 
-$(ctx).click(function(e) {
+$(document).click(function(e) {
         var x = Math.floor((e.pageX-$("#display").offset().left));
         var y = Math.floor((e.pageY-$("#display").offset().top));
         console.log("click x: " + x + " y: " + y);
@@ -92,7 +119,9 @@ $(ctx).click(function(e) {
         c = square.c;
         r = square.r;
         console.log("click c: " + c + " r: " + r);
-        map[c + 500 + xoffset][r + 500 + yoffset] = 0;
+        c = c + 500 + xoffset;
+        r = r + 500 + yoffset;
+        describe(c,r);
         draw();
 });
 
@@ -112,12 +141,15 @@ $(window).on('resize', function() {
 });
 
 function draw() {
-    ctx.clearRect(-1,-1,Math.ceil(ctx.canvas.width) + 1, Math.ceil(ctx.canvas.width) + 1)
-    for (var i = -1; i < 1 + Math.ceil(ctx.canvas.width / 16); i++) {
-        for (var j = -1; j < 1 + Math.ceil(ctx.canvas.height / 16); j++) {
+    ctx.clearRect(-1,-1,Math.ceil(ctx.canvas.width) + 1, Math.ceil(ctx.canvas.width) + 1);
+    max_col = Math.ceil(ctx.canvas.width / 16);
+    max_row = Math.ceil(ctx.canvas.height / 16);
+    for (var i = 0; i < max_col; i++) {
+        for (var j = 0; j < max_row; j++) {
             drawTile(i*16, j*16, tileNum[map[i + 500 + xoffset][j + 500 + yoffset]]);
         }
     }
+    drawTile(0,0, tileNum[0]);
 }
 
 $(window).keypress(function(event) {
