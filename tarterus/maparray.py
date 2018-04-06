@@ -107,6 +107,9 @@ class MapSquare(tuple):
         'stup': '<',
         'vwal': '|',
         'hwal': '-',
+        'tcor': '^',
+        'bcor': 'v',
+        'errr': 'X'
     }
 
 

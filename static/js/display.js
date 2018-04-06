@@ -113,6 +113,7 @@ $(document).ready(function() {
     map = json.mp;
     section_map = json.rnums;
     roomlist = json.rlist;
+    console.log(roomlist)
     // makeMap();
 });
 
