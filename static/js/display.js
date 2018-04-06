@@ -9,10 +9,13 @@ var tileImg = {
     room : [128, 336],
     hall : [144, 336],
     tcor : [512, 320],
-    bcor : [560, 320]
+    bcor : [560, 320],
+    door : [64,  336],
+    sdwn : [192, 336],
+    stup : [176, 336]
 };
 
-var tileNum = [tileImg.void, tileImg.vwal, tileImg.hwal, tileImg.room, tileImg.hall, tileImg.tcor, tileImg.bcor];
+var tileNum = [tileImg.void, tileImg.vwal, tileImg.hwal, tileImg.room, tileImg.hall, tileImg.tcor, tileImg.bcor, tileImg.door, tileImg.sdwn, tileImg.stup];
 
 var map = null;
 var section_map = null;
@@ -99,16 +102,18 @@ $(document).ready(function() {
         $.ajax({
             'async': false,
             'global': false,
-            'url': 'static/static/mp.json',
+            'url': '/jsontest',
             'dataType': "json",
             'success': function (data) {
                 json = data;
             }
         });
-        console.log(json);
         return json;
-    })(); 
-    makeMap();
+    })();
+    map = json.mp;
+    section_map = json.rnums;
+    roomlist = json.rlist;
+    // makeMap();
 });
 
 $(document).click(function(e) {
