@@ -1,87 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
-
-  <head>
-
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
-
-    <title>The Big Picture - Start Bootstrap Template</title>
-
-    <!-- Bootstrap core CSS -->
-    <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Custom styles for this template -->
-    <link href="static/css/the-big-picture.css" rel="stylesheet">
-    <link href="static/css/custom.css" rel="stylesheet">
-    <script type="text/javascript" src="static/js/jquery-3.3.1.min.js"></script>
-    <script type="text/javascript" src="static/js/display.js"></script>
-  </head>
-
-  <body>
-      <!-- <div class="main_panel"> -->
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="description" content="">
+        <meta name="author" content="">
+        <title>Tarterus</title>
+        <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+        <link href="static/css/the-big-picture.css" rel="stylesheet">
+        <link href="static/css/custom.css" rel="stylesheet">
+        <script type="text/javascript" src="static/js/jquery-3.3.1.min.js"></script>
+        <script type="text/javascript" src="static/js/display.js"></script>
+    </head>
+    <body>
         <span id="canvas-container">    
             <canvas id="display">
         </span>
-              <!-- <img class="placeholder" src="static/mapimage.jpg"> -->
-          <!-- </div> -->
-    <!-- Navigation -->
-    <!--
-    <nav class="navbar navbar-expand-lg fixed-bottom">
-      <div class="container">
-        <a class="navbar-brand" href="#">username</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarResponsive">
-          <ul class="navbar-nav ml-auto">
-            <li class="nav-item active">
-              <a class="nav-link" href="#">Map Maker
-                <span class="sr-only">(current)</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">Profile</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">My Maps</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">About</a>
-            </li>
-          </ul>
+        <div class="header">
+            <h1>Tarterus</h1>
+            <ul>
+                <li><a href="/username">username</li>
+                <li><a href="/maps">maps</li>
+                <li><a href="/about">about</li>
+            </ul>
         </div>
-      </div>
-    </nav>
-    -->
         <div class="option-box">
-                <h1>tarterus</h1>
-            <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Deserunt voluptates rerum eveniet sapiente repellat esse, doloremque quod recusandae deleniti nostrum assumenda vel beatae sed aut modi nesciunt porro quisquam voluptatem.</p>
+            <h2>Generation Options</h2>
+            <select name="size">
+                <option value="30x30">150ft x 150ft</option>
+                <option value="50x30">250ft x 150ft</option>
+                <option value="50x50">250ft x 250ft</option>
+                <option value="100x50" selected>500ft x 250ft</option>
+                <option value="100x100">500ft x 500ft</option>
+                <option value="200x200">1000ft x 1000ft</option>
+                <option value="500x500">2500ft x 2500ft</option>
+                <option value="1056x1056">one mile x one mile</option>
+            </select>
+            <select name="entrance">
+                <option value="n">North</option>
+                <option value="e">East</option>
+                <option value="s">South</option>
+                <option value="w">West</option>
+                <option value="c">Interior Room (stairs)</option>
+            </select>
+            <select name="character level">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+                <option value="13">13</option>
+                <option value="14">14</option>
+                <option value="15">15</option>
+                <option value="16">16</option>
+                <option value="17">17</option>
+                <option value="18">18</option>
+                <option value="19">19</option>
+                <option value="20">20</option>
+            </select>
         </div>
         <div class="flavor-town">
-            <h4>room description</h4>
-            <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Deserunt voluptates rerum eveniet sapiente repellat esse, doloremque quod recusandae deleniti nostrum assumenda vel beatae sed aut modi nesciunt porro quisquam voluptatem.</p>
+            <h2 id="room_title">Room Description</h2>
+            <div id="room_description"></div>
         </div>
-<!--
-      <div class="offset-md-1 offset-lg-3">
-        <div class="row">
-          <div class="col-lg-6 col-md-8 ui-window">
-            <h1 class="mt-5">tarterus</h1>
-            <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Deserunt voluptates rerum eveniet sapiente repellat esse, doloremque quod recusandae deleniti nostrum assumenda vel beatae sed aut modi nesciunt porro quisquam voluptatem.</p>
-          </div>
-        </div>
-          <div class"col-lg-3 col-md-3 ui-window pull-right">
-                hey ho, let's go
-          </div>
-      </div>
-
-    </section>
-    -->
-    <!-- <script src="vendor/jquery/jquery.min.js"></script> -->
-    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-
-  </body>
-
+        <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    </body>
 </html>
