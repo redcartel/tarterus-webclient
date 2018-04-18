@@ -28,57 +28,74 @@ def pop_section(maparray, mapset):
         add_hall(maparray, section, mapset)
 
 
+def empty(maparray, x, y, w, h):
+    if x + w - 1 >= maparray.w or y + h - 1 >= maparray.h or x < 0 or y < 0:
+        return False
+    return all(s == ('void', 0) for s in maparray.squares(x, y, w, h))
+
 # TODO ROOM NUMBERS
 # TODO CHECK ROOM INTERSECTION
 def add_room(maparray, section, mapset):
+    add_log("add_room: {} {} {} {}".format(*section))
     w = randint(1, 4) * 4 + 2
     h = randint(1, 4) * 4 + 2
+    add_log("w = {}, h = {}".format(w, h))
     x = 0
     y = 0
     doors = [False, False, False, False]
     for i in range(len(doors)):
-        if randint(1, 3) == 2:
+        if randint(1, 2) == 2:
             doors[i] = True
     if section[1] == 'n':
         doors[2] = False
-        y = section[2] - h + 1
-        x = section[3] - w // 4 + randint(0, w // 2)
-#    elif section[1] == 'e':
-#        x = section[2]
-#        y = section[3] - h // 4 + randint(0, h // 2)
-#        doors[3] = False
-#    elif section[1] == 's':
-#        y = section[2]
-#        x = section[3] - w // 4 + randint(0, w // 2)
-#        doors[0] = False
-#    elif section[1] == 'w':
-#        x = section[2] - w + 1
-#        y = section[3] - h // 4 + randint(0, h // 2)
-#        doors[1] = False
+        y = section[3] - h + 1
+        x = randint(section[2] - 3 * w // 4, section[2] - 1 * w // 4)
+    elif section[1] == 'e':
+        x = section[2]
+        y = randint(section[3] - 3 * h // 4, section[3] - 1 * h // 4)
+        doors[3] = False
+    elif section[1] == 's':
+        y = section[3]
+        x = randint(section[2] - 3 * w // 4, section[2] - 1 * w // 4)
+        doors[0] = False
+    elif section[1] == 'w':
+        x = section[2] - w + 1
+        y = randint(section[3] - 3 * h // 4, section[3] - 1 * h // 4)
+        doors[1] = False
+    if not empty(maparray, x, y, w, h):
+        return False
     maparray[x:x+w, y:y+h] = room(w, h, 0)
+    add_log("room {}:{}, {}:{}".format(x, x+w, y, y+h))
     maparray[section[2], section[3]] = ('door', 0)
-#    if doors[0] == True and y > 16:
-#        dx = x + w // 4 + randint(0, w // 2)
-#        maparray[dx, y] = ('door', 0)
-#        mapset.add(('hall', 'n', dx, y - 1))
-#    if doors[1] == True and x + w + 16 < maparray.w:
-#        dy = y + h // 4 + randint(0, h // 2)
-#        maparray[x + w - 1, dy] = ('door', 0)
-#        mapset.add(('hall', 'e', x + w, dy))
-#    if doors[2] == True and y + h + 16 < maparray.h:
-#        dx = x + w // 4 + randint(0, w // 2)
-#        maparray[dx, y + h - 1] = ('door', 0)
-#        mapset.add(('hall', 's', dx, y + h))
-#    if doors[3] == True and x > 16:
-#        dy = y + h // 4 + randint(0, h // 2)
-#        maparray[x, dy] = ('door', 0)
-#        mapset.add(('hall', 'w', x - 1, dy))
-
+# TODO: NO DOORS IF HALL FAILS TO GENERATE (? WHERE TO PUT THAT CODE ?)
+    if doors[0] is True:
+        dx = randint(x + w // 4, x + 3 * w // 4)
+        maparray[dx, y] = ('door', 0)
+        mapset.add(('hall', 'n', dx, y - 1))
+    if doors[1] is True:
+        dy = randint(y + h // 4, y + 3 * h // 4)
+        maparray[x + w - 1, dy] = ('door', 0)
+        mapset.add(('hall', 'e', x + w, dy))
+    if doors[2] is True:
+        dx = randint(x + w // 4, x + 3 * w // 4)
+        maparray[dx, y + h - 1] = ('door', 0)
+        mapset.add(('hall', 's', dx, y + h))
+    if doors[3] is True:
+        dy = randint(y + h // 4, y + 3 * h // 4)
+        maparray[x, dy] = ('door', 0)
+        mapset.add(('hall', 'w', x - 1, dy))
+    return False
 
 def add_hall(maparray, section, mapset):
+    add_log("add_hall: {}, {}, {}, {}".format(*section))
     l = randint(4,16)
+    add_log("l = {}".format(l))
     if section[1] == 'n':
-        maparray[section[2],section[3]-l+1:section[3]+1] = ('hall', 0)
+        x = section[2]
+        y = section[3]-l+1
+        if not empty(maparray,x,y,1,l):
+            return False
+        maparray[x,y:y+l] = ('hall', 0)
         r = 1 # randint(1,8)
         if r == 7 and section[2] + 16 < maparray.w:
             mapset.add(('hall', 'e', section[2] + 1,
@@ -86,47 +103,53 @@ def add_hall(maparray, section, mapset):
         elif r == 8 and section[2] > 16:
             mapset.add(('hall', 'w', section[2] - 1,
                 randint(section[3] - 3 * l // 4, section[3] - l // 4)))
-        if section[3] - l - 16 > 0:
-            mapset.add(('room', 'n', section[2], section[3] - l))
-#    if section[1] == 'e':
-#        maparray[section[2]:section[2]+l,section[3]] = ('hall', 0)
-#        r = randint(1,8)
-#        if r == 7 and section[3] + 16 < maparray.h:
-#            mapset.add(('hall', 's',
-#                randint(section[2] + l // 4, section[2] + 3 * l // 4),
-#                section[3] + l))
-#        elif r == 8 and section[3] > 16:
-#            mapset.add(('hall', 'n',
-#                    randint(section[2] + l // 4, section[2] + 3 * l // 4),
-#                    section[3]))
-#        if section[2] + l + 16 < maparray.w:
-#            mapset.add(('room', 'e', section[2]+l-1, section[3]))
-#    if section[1] == 's':
-#        maparray[section[2], section[3]:section[3]+l] = ('hall', 0)
-#        r = randint(1, 8)
-#        if r == 7 and section[2] + 16 < maparray.w:
-#            :mapset.add(('hall', 'e', section[2] + 1,
-#                randint(section[3] + l // 4, section[3] + 3 * l // 4)))
-#        elif r == 8 and section[2] > 16:
-#            mapset.add(('hall', 'w', section[2] - 1,
-#                randint(section[3] + l // 4, section[3] + 3 * l // 4)))
-#        if section[3] + l + 16 < maparray.h:
-#            mapset.add(('room', 's', section[2], section[3]+l))
-#    if section[1] == 'w':
-#        maparray[section[2]-l+1:section[2]+1,section[3]] = ('hall', 0)
-#        r = randint(1,8)
-#        if r == 7 and section[3] + 16 < maparray.h:
-#            mapset.add(('hall', 's',
-#                randint(section[2] - 3 * l // 4, section[2] - l // 4),
-#                section[3] + 1))
-#        elif r == 8 and section[3] > 16:
-#            mapset.add(('hall', 'n', 
-#                randint(section[2] - 3 * l // 4, section[2] - l // 4), 
-#                section[3] - 1))
-#        if section[2] - l - 16 > 0:
-#            mapset.add(('room', 'w', section[2]-l, section[3]))
-
-
+        mapset.add(('room', 'n', x, y - 1))
+    elif section[1] == 'e':
+        x = section[2]
+        y = section[3]
+        if not empty(maparray, x, y, l, 1):
+            return False
+        maparray[x:x+l,y] = ('hall', 0)
+        r = 1 # randint(1,8)
+        if r == 7 and section[3] + 16 < maparray.h:
+            mapset.add(('hall', 's',
+                randint(section[2] + l // 4, section[2] + 3 * l // 4), section[3] + l))
+        elif r == 8 and section[3] > 16:
+            mapset.add(('hall', 'n',
+                randint(section[2] + l // 4, section[2] + 3 * l // 4),
+                section[3]))
+        mapset.add(('room', 'e', x+l, y))
+    elif section[1] == 's':
+        x = section[2]
+        y = section[3]
+        if not empty(maparray, x,y,1,l):
+            return False
+        maparray[x, y:y+l] = ('hall', 0)
+        r = 1 # randint(1, 8)
+        if r == 7 and section[2] + 16 < maparray.w:
+            mapset.add(('hall', 'e', section[2] + 1,
+                randint(section[3] + l // 4, section[3] + 3 * l // 4)))
+        elif r == 8 and section[2] > 16:
+            mapset.add(('hall', 'w', section[2] - 1,
+                randint(section[3] + l // 4, section[3] + 3 * l // 4)))
+        mapset.add(('room', 's', x, y+l))
+    elif section[1] == 'w':
+        x = section[2] - l + 1
+        y = section[3]
+        if not empty(maparray, x,y,l,1):
+            return False
+        maparray[x:x+l,y] = ('hall', 0)
+        r = 1 # randint(1,8)
+        if r == 7 and section[3] + 16 < maparray.h:
+            mapset.add(('hall', 's',
+                randint(section[2] - 3 * l // 4, section[2] - l // 4),
+                section[3] + 1))
+        elif r == 8 and section[3] > 16:
+            mapset.add(('hall', 'n', 
+                randint(section[2] - 3 * l // 4, section[2] - l // 4), 
+                section[3] - 1))
+        mapset.add(('room', 'w', x-1, y))
+    return True
 
 
 def room(w, h, rnum):
@@ -141,9 +164,9 @@ def room(w, h, rnum):
 def gen_map(w, h, typ="default"):
     maparray = MapArray(('void', 0), (w, h))
     x = maparray.w // 2
-    y = maparray.h - 1
+    y = 0
     mapset = set()
-    add_hall(maparray, ('hall', 'n', x, y), mapset)
+    add_hall(maparray, ('hall', 's', x, y), mapset)
     while len(mapset) > 0:
         pop_section(maparray, mapset)
     return (maparray, [{}])
@@ -266,8 +289,7 @@ def fetch_map(w, h, typ="default"):
     if typ == "hall_test":
         maparray, roomlist = gen_map(w, h)
     add_log("fetch_map")
-    log = get_log()
-    return json.dumps(maparray_to_json(maparray, roomlist, log))
+    return json.dumps(maparray_to_json(maparray, roomlist, get_log()))
 
 
 if __name__ == "__main__":
