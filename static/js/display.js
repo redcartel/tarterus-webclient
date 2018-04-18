@@ -22,6 +22,7 @@ var section_map = null;
 var roomlist = [];
 var loaded = false;
 
+/*
 function drawRoom(x, y, w, h, rnum) {
         for (var c = x; c < x + w; c++) {
                 for (var r = y; r < y + h; r++) {
@@ -74,6 +75,7 @@ function makeMap() {
     }
     console.log(roomlist[20]);
 }
+*/
 
 function describe(c,r) {
     rnum = section_map[c][r];
@@ -99,10 +101,12 @@ $(document).ready(function() {
     tiles.src = 'static/resources/Vanilla_tiles.png';
     var json = (function () {
         var json = null;
+        var w = Math.ceil(ctx.canvas.width / 16);
+        var h = Math.ceil(ctx.canvas.height / 16);
         $.ajax({
             'async': false,
             'global': false,
-            'url': '/jsontest',
+            'url': '/default_room/' + w + '/' + h,
             'dataType': "json",
             'success': function (data) {
                 json = data;
@@ -131,6 +135,15 @@ $(document).click(function(e) {
         draw();
 });
 
+function dims() {
+    return {
+        w: Math.ceil(ctx.canvas.width  / 16),
+        h: Math.ceil(ctx.canvas.height / 16),
+        mw: map.length,
+        mh: map[0].length
+    }
+}
+
 function getsquare(x, y) {
         c = Math.floor(x / 16);
         r = Math.floor(y / 16);
@@ -140,6 +153,8 @@ function getsquare(x, y) {
         }
 }
 
+dfkjdk = 1
+
 $(window).on('resize', function() {
     ctx.canvas.width = window.innerWidth;
     ctx.canvas.height = window.innerHeight;
@@ -148,11 +163,17 @@ $(window).on('resize', function() {
 
 function draw() {
     ctx.clearRect(-1,-1,Math.ceil(ctx.canvas.width) + 1, Math.ceil(ctx.canvas.width) + 1);
-    max_col = Math.ceil(ctx.canvas.width / 16);
-    max_row = Math.ceil(ctx.canvas.height / 16);
+    max_col = dims().w;
+    max_row = dims().h;
+    if (xoffset + max_col + Math.floor(dims().w / 2) > dims().mw) {
+        max_col = dims().mw - Math.floor(dims().w / 2) - xoffset;
+    }
+    if (yoffset + max_row + Math.floor(dims().h / 2) > dims().mh) {
+        max_row = dims().mw - Math.floor(dims().h / 2) - yoffset;
+    }
     for (var i = 0; i < max_col; i++) {
         for (var j = 0; j < max_row; j++) {
-            drawTile(i*16, j*16, tileNum[map[i + 500 + xoffset][j + 500 + yoffset]]);
+            drawTile(i*16, j*16, tileNum[map[i + Math.floor(dims().w / 2) + xoffset][j + Math.floor(dims().h) + yoffset]]);
         }
     }
     drawTile(0,0, tileNum[0]);
