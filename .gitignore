@@ -2,3 +2,4 @@ node_modulestags
 tags
 static/mp.json
 tarterus/__pycache__
+*.pyc
