@@ -53,22 +53,44 @@ def turn_positive(direction):
     return return_val[direction]
 
 
+def is_positive(direction):
+    return_val = {
+            'n' : False,
+            'e' : True,
+            's' : True,
+            'w' : False
+        }
+    return return_val[direction]
+
+
 def back_to_left(x, y, direction, width):
-    x, y = advance(x, y, back(direction), 1) # take one step back
-    if left(direction) == turn_positive(direction): # cross width of the hall
-        x, y = advance(x, y, left(direction), width)
-    else: # one square to left
-        x, y = advance(x, y, left(direction), 1)
-    return (x, y)
+    return (0, 0)
+#    x, y = advance(x, y, back(direction), 1) # take one step back
+#    if left(direction) == turn_positive(direction): # cross width of the hall
+#        x, y = advance(x, y, left(direction), width)
+#    else: # one square to left
+#        x, y = advance(x, y, left(direction), 1)
+#    return (x, y)
 
 
 def back_to_right(x, y, direction, width):
-    x, y = advance(x, y, back(direction), 1) # take one step back
-    if right(direction) == turn_positive(direction): # cross width of the hall
-        x, y = advance(x, y, right(direction), width)
-    else: # one square to right
-        x, y = advance(x, y, right(direction), 1)
-    return (x, y)
+    return (0, 0)
+#    x, y = advance(x, y, back(direction), 1) # take one step back
+#    if right(direction) == turn_positive(direction): # cross width of the hall
+#        x, y = advance(x, y, right(direction), width)
+#    else: # one square to right
+#        x, y = advance(x, y, right(direction), 1)
+#    return (x, y)
+
+
+# the location of a branch of a passage of a given width. the turn may or may
+# not result in the new branch being across the hall vs. 1 square away, depend-
+# ing on if the turn is in a positive or negative coordinate direction
+def turn_across(x, y, direction, new_direction, width):
+    if turn_positive(direction) == new_direction:
+        return advance(x, y, new_direction, width)
+    if turn_positive(direction) == back(new_direction):
+        return advance(x, y, new_direction, 1)
 
 
 def advance(x, y, direction, length):
@@ -86,7 +108,7 @@ def middle_value(n, roll=-1):
     elif roll == -1:
         return n // 2 + randint(0,1)
     else:
-        return n // 2 + roll
+        return n // 2 + (roll % 2)
 
 
 # current behavior is to draw a passage until it hits non-void tiles
@@ -185,24 +207,27 @@ def passage_no_block(maparray, x, y, direction, width, length, psquare):
 
 
 # TODO columns
-def passage_width_table(die_roll, from_chamber = False):
-    if from_chamber is True:
-        n = (die_roll - 1) % 20 + 1
-    else:
-        n = (die_roll - 1) % 12 + 1
-    if n <= 2:
+# dieroll = -1 : d12 (passage from passage)
+# dieroll = 20 : d20 (passage from chamber)
+def passage_width_table(die_roll = -1, from_chamber = False):
+    if die_roll == -1:
+        die_roll = randint(1, 12)
+    elif die_roll == 20:
+        die_roll = randint(1, 20)
+        
+    if die_roll <= 2:
         return {"width" : 1}
-    elif n <= 12:
+    elif die_roll <= 12:
         return {"width" : 2}
-    elif n <= 14:
+    elif die_roll <= 14:
         return {"width" : 4}
-    elif n <= 16:
+    elif die_roll <= 16:
         return {"width" : 6}
     else:
         return {"width" : 8}
 
 # straight 30ft, no doors or side passages 10 more feet & continue
-def passage_table_1_2(maparray, mapset, x, y, direction, width, psquare):
+def passage_table_1_2(maparray, mapset, x, y, direction, width, psquare, die_roll=-1):
     catch = draw_passage_section(maparray, x, y, direction, width, 6, psquare)
     if catch['result'] == 'success':
         nx = catch['next_square'][0]
@@ -216,26 +241,59 @@ def passage_table_1_2(maparray, mapset, x, y, direction, width, psquare):
 # across (width) tiles
 
 # straight 20 ft, door to the right, 10 more feet & continue
-def passage_table_3(maparray, mapset, x, y, direction, width, psquare):
+def passage_table_3(maparray, mapset, x, y, direction, width, psquare, die_roll=-1):
     catch = draw_passage_section(maparray, x, y, direction, width, 4, psquare)
     if catch['result'] != 'success':
         return catch['blocks']
     x, y = catch['next_square']
-    dx, dy = back_to_right(x, y, direction, width)
-    mapset.add(('door', 'passage', dx, dy, right(direction), 1, ('door', -1)))
+    dx, dy = x, y
     catch = draw_passage_section(maparray, x, y, direction, width, 2, psquare)
+    if catch['result'] != 'success':
+        return catch['blocks']
     x, y = catch['next_square']
+    dx, dy = turn_across(x, y, direction, right(direction), width)
+    mapset.add(('door', 'passage', dx, dy, right(direction), 1, ('door', -1)))
     mapset.add(('hall', 'passage', x, y, direction, width, psquare))
     return None
 
 # straight 20 ft, door to the left, 10 more feet & continue
-def passage_table_4(maparray, mapset, x, y, direction, width, psquare):
+def passage_table_4(maparray, mapset, x, y, direction, width, psquare, die_roll=-1):
     catch = draw_passage_section(maparray, x, y, direction, width, 4, psquare)
     if catch['result'] != 'success':
         return catch['blocks']
     x, y = catch['next_square']
-    dx, dy = back_to_left(x, y, direction, width)
-    mapset.add(('door', 'passage', dx, dy, left(direction), width, ('door', -1)))
+    dx, dy = x, y
+    catch = draw_passage_section(maparray, x, y, direction, width, 2, psquare)
+    if catch['result'] != 'success':
+        return catch['blocks']
+    x, y = catch['next_square']
+    dx, dy = turn_across(x, y, direction, left(direction), width)
+    mapset.add(('door', 'passage', dx, dy, left(direction), 1, ('door', -1)))
+    mapset.add(('hall', 'passage', x, y, direction, width, psquare))
+    return None
+
+# straight 20 ft, ends in door 
+def passage_table_5(maparray, mapset, x, y, direction, width, psquare, die_roll=-1):
+    catch = draw_passage_section(maparray, x, y, direction, width, 4, psquare)
+    if catch['result'] != 'success':
+        return catch['blocks']
+    dx, dy = catch['next_square']
+    dx, dy = advance(dx, dy, turn_positive(direction), middle_value(width, die_roll)-1)
+    mapset.add(('door', 'passage', dx, dy, direction, 1, ('door', 1)))
+    return None
+
+# straight 20 ft, side passage right, 10 ft
+def passage_table_6_7(maparray, mapset, x, y, direction, width, psquare, die_roll=-1):
+    catch = draw_passage_section(maparray, x, y, direction, width, 4, psquare)
+    if catch['result'] != 'success':
+        return catch['blocks']
+    x, y = catch['next_square']
+    # px, py = back_to_right(x, y, direction, width)
+    px, py = advance(x, y, back(direction), 1)
+    px, py = turn_across(px, py, direction, right(direction), width)
+    nwidth = passage_width_table(die_roll)['width']
+    nsquare = (psquare[0], new_passage_descriptor())
+    mapset.add(('hall', 'passage', px, py, right(direction), nwidth, nsquare))
     catch = draw_passage_section(maparray, x, y, direction, width, 2, psquare)
     if catch['result'] != 'success':
         return catch['blocks']
@@ -243,23 +301,87 @@ def passage_table_4(maparray, mapset, x, y, direction, width, psquare):
     mapset.add(('hall', 'passage', x, y, direction, width, psquare))
     return None
 
-# straight 20 ft, ends in door
-def passage_table_5(maparray, mapset, x, y, direction, width, psquare):
+# 20 feet forward, branch to left, 10 feet forward continue
+def passage_table_8_9(maparray, mapset, x, y, direction, width, psquare, die_roll=-1):
     catch = draw_passage_section(maparray, x, y, direction, width, 4, psquare)
     if catch['result'] != 'success':
         return catch['blocks']
-    dx, dy = catch['next_square']
-    dx, dy = advance(dx, dy, turn_positive(direction), middle_value(width)-1)
-    mapset.add(('door', 'passage', dx, dy, direction, 1, psquare))
+    x, y = catch['next_square']
+    # px, py = back_to_left(x, y, direction, width)
+    px, py = advance(x, y, back(direction), 1)
+    px, py = turn_across(px, py, direction, left(direction), width)
+    nwidth = passage_width_table(die_roll)['width']
+    nsquare = (psquare[0], new_passage_descriptor())
+    mapset.add(('hall', 'passage', px, py, left(direction), nwidth, nsquare))
+    catch = draw_passage_section(maparray, x, y, direction, width, 2, psquare)
+    if catch['result'] != 'success':
+        return catch['blocks']
+    x, y = catch['next_square']
+    mapset.add(('hall', 'passage', x, y, direction, width, psquare))
     return None
 
-def dispatch_passage(maparray, mapset, element, die_roll = -1, die_roll2 = -1):
-    if die_roll == -1:
-        die_roll = randint(1,5)
-    die_roll = (die_roll - 1) % 20 + 1
-    if die_roll2 == -2:
-        die_roll2 = randint(1,12)
-    die_roll2 = (die_roll2 - 1) % 20 + 1
+# Straight 20ft, dead end, 10% chance of secret door
+def passage_table_10(maparray, mapset, x, y, direction, width, psquare, die_roll=-1):
+    catch = draw_passage_section(maparray, x, y, direction, width, 4, psquare)
+    if catch['result'] != 'success':
+        return catch['blocks']
+    x, y = catch['next_square']
+    if die_roll >= 19:
+        dx, dy = catch['next_square']
+        dx, dy = advance(dx, dy, turn_positive(direction), middle_value(width, die_roll)-1)
+        mapset.add(('door', 'passage', dx, dy, direction, 1, ('door', 1)))
+    return None
+
+# Straight 20ft, left turn, 10 ft
+def passage_table_11_12(maparray, mapset, x, y, direction, width, psquare, die_roll=-1):
+    catch = draw_passage_section(maparray, x, y, direction, width, 4, psquare)
+    if catch['result'] != 'success':
+        return catch['blocks']
+    px, py = catch['next_square']
+    catch = draw_passage_section(maparray, px, py, direction, width, width, psquare)
+    if catch['result'] != 'success':
+        return catch['blocks']
+    if not is_positive(direction):
+        px, py = catch['next_square']
+        px, py = advance(px, py, back(direction), 1)
+    px, py = turn_across(px, py, direction, left(direction), width)
+    catch = draw_passage_section(maparray, px, py, left(direction), width, 2, psquare)
+    if catch['result'] != 'success':
+        return catch['blocks']
+    px, py = catch['next_square']
+    mapset.add(('hall', 'passage', px, py, left(direction), width, psquare))
+    return None
+
+
+def passage_table_13_14(maparray, mapset, x, y, direction, width, psquare, die_roll=-1):
+    catch = draw_passage_section(maparray, x, y, direction, width, 4, psquare)
+    if catch['result'] != 'success':
+        return catch['blocks']
+    px, py = catch['next_square']
+    catch = draw_passage_section(maparray, px, py, direction, width, width, psquare)
+    if catch['result'] != 'success':
+        return catch['blocks']
+    if not is_positive(direction):
+        px, py = catch['next_square']
+        px, py = advance(px, py, back(direction), 1)
+    px, py = turn_across(px, py, direction, right(direction), width)
+    catch = draw_passage_section(maparray, px, py, right(direction), width, 2, psquare)
+    if catch['result'] != 'success':
+        return catch['blocks']
+    px, py = catch['next_square']
+    mapset.add(('hall', 'passage', px, py, right(direction), width, psquare))
+    return None
+
+
+def passage_table_15_19(maparray, mapset, x, y, direction, width, psquare, die_roll=-1):
+    mapset.add(('room', 'passage', x, y, direction, width, psquare))
+
+
+def passage_table_20(maparray, mapset, x, y, direction, width, psquare, die_roll=-1):
+    mapset.add(('stairs', 'passage', x, y, direction, width, psquare))
+
+
+def dispatch_passage(maparray, mapset, element, die_roll, die_roll2):
     x = element[2]
     y = element[3]
     direction = element[4]
@@ -269,14 +391,34 @@ def dispatch_passage(maparray, mapset, element, die_roll = -1, die_roll2 = -1):
         width = passage_width_table(die_roll2)
         # add new passage to roomlist
     if die_roll <= 2:
-        passage_table_1_2(maparray, mapset, x, y, direction, width, psquare)
+        passage_table_1_2(maparray, mapset, x, y, direction, width, psquare, die_roll2)
     elif die_roll <= 3:
-        passage_table_3(maparray, mapset, x, y, direction, width, psquare)
+        passage_table_3(maparray, mapset, x, y, direction, width, psquare, die_roll2)
     elif die_roll <= 4:
-        passage_table_4(maparray, mapset, x, y, direction, width, psquare)
+        passage_table_4(maparray, mapset, x, y, direction, width, psquare, die_roll2)
+    elif die_roll <= 5:
+        passage_table_5(maparray, mapset, x, y, direction, width, psquare, die_roll2)
+    elif die_roll <= 7:
+        passage_table_6_7(maparray, mapset, x, y, direction, width, psquare, die_roll2)
+    elif die_roll <= 9:
+        passage_table_8_9(maparray, mapset, x, y, direction, width, psquare, die_roll2)
+    elif die_roll <= 10:
+        passage_table_10(maparray, mapset, x, y, direction, width, psquare, die_roll2)
+    elif die_roll <= 12:
+        passage_table_11_12(maparray, mapset, x, y, direction, width, psquare, die_roll2)
+    elif die_roll <= 14:
+        passage_table_13_14(maparray, mapset, x, y, direction, width, psquare, die_roll2)
+    elif die_roll <= 19:
+        passage_table_15_19(maparray, mapset, x, y, direction, width, psquare, die_roll2)
     else:
-        passage_table_5(maparray, mapset, x, y, direction, width, psquare)
+        passage_table_20(maparray, mapset, x, y, direction, width, psquare, die_roll2)
 
-def dispatch_door(maparray, mapset, element):
+# allocate new identifier for descriptor table, add description
+# worlds of potential here
+def new_passage_descriptor():
+    return 1 
+
+
+def dispatch_door(maparray, mapset, element, die_roll1=1, die_roll2=1):
     if maparray[element[2], element[3]] == ('void', 0):
         maparray[element[2], element[3]] = ('door', 1)

@@ -1,0 +1,3 @@
+static/js/map_canvas.js tarterus/maparray.py tarterus/mapgen.py tarterus/passage.py
+runtests.py
+serv-full.py templates/index.html static/css/custom.css
