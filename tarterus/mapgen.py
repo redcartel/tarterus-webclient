@@ -86,6 +86,12 @@ def add_room(maparray, section, mapset):
         mapset.add(('hall', 'w', x - 1, dy))
     return False
 
+
+
+def add_passage(maparray, section, mapset, r20_1, r20_2):
+    pass
+
+
 def add_hall(maparray, section, mapset):
     add_log("add_hall: {}, {}, {}, {}".format(*section))
     l = randint(4,16)
