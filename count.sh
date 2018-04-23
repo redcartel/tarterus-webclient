@@ -1,1 +1,1 @@
-cat sourcefiles | xargs cat | sed '/^\s*#/d;/^\s*$/d' | wc -l
+cat sourcefiles | xargs cat | sed '/^\s*$/d' | wc -l

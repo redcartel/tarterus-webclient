@@ -1,148 +1,6 @@
 from tarterus.maparray import MapArray
+from tarterus.graphpaper import vector, right, left, back, turn_positive, is_positive, turn_across, advance, empty, middle_value
 from random import randint
-
-def vector(direction):
-    return_val = {
-            'n' : (0, -1),
-            'e' : (1, 0),
-            's' : (0, 1),
-            'w' : (-1, 0)
-        }
-    return return_val[direction]
-
-
-def right(direction):
-    return_val = {
-            'n' : 'e',
-            'e' : 's',
-            's' : 'w',
-            'w' : 'n'
-        }
-    return return_val[direction]
-
-
-def left(direction):
-    return_val = {
-            'n' : 'w',
-            'e' : 'n',
-            's' : 'e',
-            'w' : 's'
-        }
-    return return_val[direction]
-
-
-def back(direction):
-    return_val = {
-            'n' : 's',
-            'e' : 'w',
-            's' : 'n',
-            'w' : 'e'
-        }
-    return return_val[direction]
-
-
-# turn to the orthogonal direction that is numerically positive along the 
-# x or y axis
-def turn_positive(direction):
-    return_val = {
-            'n' : 'e',
-            'e' : 's',
-            's' : 'e',
-            'w' : 's'
-        }
-    return return_val[direction]
-
-
-def is_positive(direction):
-    return_val = {
-            'n' : False,
-            'e' : True,
-            's' : True,
-            'w' : False
-        }
-    return return_val[direction]
-
-
-def back_to_left(x, y, direction, width):
-    return (0, 0)
-#    x, y = advance(x, y, back(direction), 1) # take one step back
-#    if left(direction) == turn_positive(direction): # cross width of the hall
-#        x, y = advance(x, y, left(direction), width)
-#    else: # one square to left
-#        x, y = advance(x, y, left(direction), 1)
-#    return (x, y)
-
-
-def back_to_right(x, y, direction, width):
-    return (0, 0)
-#    x, y = advance(x, y, back(direction), 1) # take one step back
-#    if right(direction) == turn_positive(direction): # cross width of the hall
-#        x, y = advance(x, y, right(direction), width)
-#    else: # one square to right
-#        x, y = advance(x, y, right(direction), 1)
-#    return (x, y)
-
-
-# the location of a branch of a passage of a given width. the turn may or may
-# not result in the new branch being across the hall vs. 1 square away, depend-
-# ing on if the turn is in a positive or negative coordinate direction
-def turn_across(x, y, direction, new_direction, width):
-    if turn_positive(direction) == new_direction:
-        return advance(x, y, new_direction, width)
-    if turn_positive(direction) == back(new_direction):
-        return advance(x, y, new_direction, 1)
-
-
-def advance(x, y, direction, length):
-    return (x + vector(direction)[0] * length, 
-            y + vector(direction)[1] * length)
-
-
-def empty(maparray, x, y, w, h):
-    return all(s == ('void', 0) for s in maparray.squares(x, y, w, h))
-
-
-def middle_value(n, roll=-1):
-    if n % 2 == 1:
-        return n // 2 + 1
-    elif roll == -1:
-        return n // 2 + randint(0,1)
-    else:
-        return n // 2 + (roll % 2)
-
-
-# current behavior is to draw a passage until it hits non-void tiles
-# TODO: COLUMN MODES
-def draw_passage_section(maparray, x, y, direction, width, length, psquare):
-    origins = [(x, y)]
-    d_vec = vector(direction)
-    o_vec = vector(turn_positive(direction))
-    for i in range(1, width):
-        origins.append((x + i * o_vec[0], y + i * o_vec[1]))
-    blocks = []
-    step_out = False # after the first block is hit, the rest of the
-                         # passage advances one more step then the process
-                         # terminates
-    for i in range(length):
-        for s in origins:
-            target = (s[0] + i * d_vec[0], s[1] + i * d_vec[1])
-            if maparray[target[0], target[1]] != ('void', 0):
-                origins.remove(s)
-                blocks.append(s)
-            elif target[0] <= 0 or target[0] + 1 >= maparray.w or \
-                    target[1] <= 0 or target[1] + 1 >= maparray.h:
-                return { "result" : "edge", "blocks" : [] }
-            else:
-                maparray[target[0], target[1]] = psquare
-        if step_out is True:
-            break
-        if len(origins) < width:
-            step_out = True
-    if len(blocks) > 0:
-        return {"result" : "blocked", "blocks": blocks}
-    else:
-        return { "result" : "success", 
-                "next_square": (x + length * d_vec[0], y + length * d_vec[1]) }
 
 # hall origin into box dimensions for maparray ranges
 # width always measures in a positive direction
@@ -192,7 +50,39 @@ def coords(x, y, direction, width, length):
                 "ny" : y
                 }
     return return_val
+# current behavior is to draw a passage until it hits non-void tiles
+# TODO: COLUMN MODES
 
+def draw_passage_section(maparray, x, y, direction, width, length, psquare):
+    origins = [(x, y)]
+    d_vec = vector(direction)
+    o_vec = vector(turn_positive(direction))
+    for i in range(1, width):
+        origins.append((x + i * o_vec[0], y + i * o_vec[1]))
+    blocks = []
+    step_out = False # after the first block is hit, the rest of the
+                         # passage advances one more step then the process
+                         # terminates
+    for i in range(length):
+        for s in origins:
+            target = (s[0] + i * d_vec[0], s[1] + i * d_vec[1])
+            if maparray[target[0], target[1]] != ('void', 0):
+                origins.remove(s)
+                blocks.append(s)
+            elif target[0] <= 0 or target[0] + 1 >= maparray.w or \
+                    target[1] <= 0 or target[1] + 1 >= maparray.h:
+                return { "result" : "edge", "blocks" : [] }
+            else:
+                maparray[target[0], target[1]] = psquare
+        if step_out is True:
+            break
+        if len(origins) < width:
+            step_out = True
+    if len(blocks) > 0:
+        return {"result" : "blocked", "blocks": blocks}
+    else:
+        return { "result" : "success", 
+                "next_square": (x + length * d_vec[0], y + length * d_vec[1]) }
 # draw a passage if it is an entirely clear path
 # TODO (if needed): return more meaningful blocks data
 def passage_no_block(maparray, x, y, direction, width, length, psquare):
