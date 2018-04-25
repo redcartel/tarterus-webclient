@@ -61,6 +61,7 @@ def engine_tests():
     print(e)
 
 
+# TODO WRITE TESTS FOR PASSAGE DRAWING w/ COLLISION
 def passage_tests():
     print("Tests: ")
 
@@ -242,12 +243,31 @@ def room_tests():
     m[35, 2] = ('room', 2)
     x, y = room.find_loc(m, 20, 1, 20, 10, "s", 1, [6, 5])
     assert (x, y) == (15, 1), str((x, y))
-    x, y = room.find_loc(m, 38, 20, 30, 15, "w", 1, [3, 2])
-    print(x, y)
-    x, y = room.find_loc(m, 10, 12, 12, 12, "n", 4, [5, 6])
-    # x, y = room.find_loc(m, 10, 12, 12, 12, "n", 4, [5, 6])
-    # x, y = room.find_loc(m, 38, 20, 30, 15, "w", 1, [3, 2])
+    m = MapArray(('void', 0), (40, 40))
+    m[4, 4] = ("room", 1)
+    m[6, 11] = ("hall", 2)
+    x, y = room.find_loc(m, 1, 8, 6, 6, "e", 1, [10, 4])
+    assert (x, y) == (1, 5), str((x, y))
+    m = MapArray(('void', 0), (40, 40))
+    x, y = room.find_loc(m, 1, 10, 6, 6, "e", 1, [6, 5])
+    assert (x, y) == (1, 7), str((x, y))
+    x, y = room.find_loc(m, 10, 1, 6, 6, "s", 4, [6, 5])
     assert (x, y) == (9, 1), str((x, y))
+    m = MapArray(('void', 0), (50, 50))
+    # 6 + 5 = 11 - 11 = 0 + (8-2)//2 = 3
+    # 30, 20 move north by (3-1) = 18
+    x, y = room.find_loc(m, 30, 20, 8, 8, "w", 1, [6, 5])
+    assert (x, y) == (23, 16), str((x, y))
+    x, y = room.find_loc(m, 30, 20, 8, 8, "w", 4, [6, 5])
+    assert (x, y) == (23, 19), str((x, y))
+
+    # room tables
+    e.send(['clear'])
+    e.add(['room', 'door', 10, 10, "n", 1, ('room', 1)])
+    e.send(['step_with_command', {"dice": [13, 3]}])
+    print(e)
+
+    
 
 
 if __name__ == "__main__":

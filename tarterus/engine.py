@@ -2,7 +2,8 @@ from tarterus.maparray import MapArray
 from tarterus.passage import dispatch_passage, dispatch_door
 from tarterus.passage import DICE_ARRAY as passage_dice
 from random import randint
-# from tarterus.room import
+from tarterus.room import dispatch_room
+from tarterus.room import DICE_ARRAY as room_dice
 # dispatch_room, dispatch_stairs, grow_room, starting_area
 
 
@@ -92,7 +93,9 @@ class Engine():
             pass
 
         if element[0] == 'room':
-            pass
+            print("engine dispatch room")
+            dice = self.roll(room_dice, command.get("dice", []))
+            dispatch_room(self, element, dice)
 
         if element[0] == 'stairs':
             pass
