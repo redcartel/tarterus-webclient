@@ -8,3 +8,5 @@ runtests.py
 serv-full.py 
 templates/index.html 
 static/css/custom.css
+tarterus/room.py
+tarterus/door.py

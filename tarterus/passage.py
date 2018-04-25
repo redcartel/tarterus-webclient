@@ -2,6 +2,8 @@ from tarterus.maparray import MapArray
 from tarterus.graphpaper import vector, right, left, back, turn_positive, is_positive, turn_across, advance, empty, middle_value
 from random import randint
 
+DICE_ARRAY = [20, 12, 10]
+
 # hall origin into box dimensions for maparray ranges
 # width always measures in a positive direction
 def coords(x, y, direction, width, length):
@@ -53,8 +55,9 @@ def coords(x, y, direction, width, length):
 # current behavior is to draw a passage until it hits non-void tiles
 # TODO: COLUMN MODES
 
-def draw_passage_section(maparray, x, y, direction, width, length, psquare):
+def draw_passage_section(engine, x, y, direction, width, length, psquare):
     origins = [(x, y)]
+    maparray = engine.maparray
     d_vec = vector(direction)
     o_vec = vector(turn_positive(direction))
     for i in range(1, width):
@@ -116,13 +119,13 @@ def passage_width_table(die_roll = -1, from_chamber = False):
     else:
         return {"width" : 8}
 
-# straight 30ft, no doors or side passages 10 more feet & continue
-def passage_table_1_2(maparray, mapset, x, y, direction, width, psquare, die_roll=-1):
-    catch = draw_passage_section(maparray, x, y, direction, width, 6, psquare)
+# straight 30ft, no doors or side passages & continue
+def passage_table_1_2(engine, x, y, direction, width, psquare, die_roll=-1):
+    catch = draw_passage_section(engine, x, y, direction, width, 6, psquare)
     if catch['result'] == 'success':
         nx = catch['next_square'][0]
         ny = catch['next_square'][1]
-        mapset.add(('hall', 'passage', nx, ny, direction, width, psquare))
+        engine.add(['hall', 'passage', nx, ny, direction, width, psquare])
         return None
     else:
         return catch['blocks']
@@ -131,177 +134,182 @@ def passage_table_1_2(maparray, mapset, x, y, direction, width, psquare, die_rol
 # across (width) tiles
 
 # straight 20 ft, door to the right, 10 more feet & continue
-def passage_table_3(maparray, mapset, x, y, direction, width, psquare, die_roll=-1):
-    catch = draw_passage_section(maparray, x, y, direction, width, 4, psquare)
+def passage_table_3(engine, x, y, direction, width, psquare, dice):
+    catch = draw_passage_section(engine, x, y, direction, width, 4, psquare)
     if catch['result'] != 'success':
         return catch['blocks']
     x, y = catch['next_square']
     dx, dy = x, y
-    catch = draw_passage_section(maparray, x, y, direction, width, 2, psquare)
+    catch = draw_passage_section(engine, x, y, direction, width, 2, psquare)
     if catch['result'] != 'success':
         return catch['blocks']
     x, y = catch['next_square']
-    dx, dy = turn_across(x, y, direction, right(direction), width)
-    mapset.add(('door', 'passage', dx, dy, right(direction), 1, ('door', -1)))
-    mapset.add(('hall', 'passage', x, y, direction, width, psquare))
+    dx, dy = turn_across(dx, dy, direction, right(direction), width)
+    engine.add(['door', 'passage', dx, dy, right(direction), 1, ('door', -1)])
+    engine.add(['hall', 'passage', x, y, direction, width, psquare])
     return None
 
 # straight 20 ft, door to the left, 10 more feet & continue
-def passage_table_4(maparray, mapset, x, y, direction, width, psquare, die_roll=-1):
-    catch = draw_passage_section(maparray, x, y, direction, width, 4, psquare)
+def passage_table_4(engine, x, y, direction, width, psquare, dice):
+    catch = draw_passage_section(engine, x, y, direction, width, 4, psquare)
     if catch['result'] != 'success':
         return catch['blocks']
     x, y = catch['next_square']
     dx, dy = x, y
-    catch = draw_passage_section(maparray, x, y, direction, width, 2, psquare)
+    catch = draw_passage_section(engine, dx, dy, direction, width, 2, psquare)
     if catch['result'] != 'success':
         return catch['blocks']
     x, y = catch['next_square']
-    dx, dy = turn_across(x, y, direction, left(direction), width)
-    mapset.add(('door', 'passage', dx, dy, left(direction), 1, ('door', -1)))
-    mapset.add(('hall', 'passage', x, y, direction, width, psquare))
+    dx, dy = turn_across(dx, dy, direction, left(direction), width)
+    engine.add(['door', 'passage', dx, dy, left(direction), 1, ('door', -1)])
+    engine.add(['hall', 'passage', x, y, direction, width, psquare])
     return None
 
 # straight 20 ft, ends in door 
-def passage_table_5(maparray, mapset, x, y, direction, width, psquare, die_roll=-1):
-    catch = draw_passage_section(maparray, x, y, direction, width, 4, psquare)
+def passage_table_5(engine, x, y, direction, width, psquare, dice):
+    catch = draw_passage_section(engine, x, y, direction, width, 4, psquare)
     if catch['result'] != 'success':
         return catch['blocks']
     dx, dy = catch['next_square']
-    dx, dy = advance(dx, dy, turn_positive(direction), middle_value(width, die_roll)-1)
-    mapset.add(('door', 'passage', dx, dy, direction, 1, ('door', 1)))
+    dx, dy = advance(dx, dy, turn_positive(direction), 
+                     middle_value(width, dice[0])-1)
+    engine.add(['door', 'passage', dx, dy, direction, 1, ('door', -1)])
     return None
 
 # straight 20 ft, side passage right, 10 ft
-def passage_table_6_7(maparray, mapset, x, y, direction, width, psquare, die_roll=-1):
-    catch = draw_passage_section(maparray, x, y, direction, width, 4, psquare)
+# TODO: d12 for die 2 in passage generation dispatch?
+def passage_table_6_7(engine, x, y, direction, width, psquare, dice):
+    catch = draw_passage_section(engine, x, y, direction, width, 4, psquare)
     if catch['result'] != 'success':
         return catch['blocks']
     x, y = catch['next_square']
-    # px, py = back_to_right(x, y, direction, width)
-    px, py = advance(x, y, back(direction), 1)
-    px, py = turn_across(px, py, direction, right(direction), width)
-    nwidth = passage_width_table(die_roll)['width']
+    px, py = turn_across(x, y, direction, right(direction), width)
+    nwidth = passage_width_table(dice[0])['width']
+    catch = draw_passage_section(engine, x, y, direction, width, 2 + nwidth, psquare)
+    if catch['result'] != 'success':
+        return catch['blocks']
     nsquare = (psquare[0], new_passage_descriptor())
-    mapset.add(('hall', 'passage', px, py, right(direction), nwidth, nsquare))
-    catch = draw_passage_section(maparray, x, y, direction, width, 2, psquare)
-    if catch['result'] != 'success':
-        return catch['blocks']
+    engine.add(['hall', 'passage', px, py, right(direction), nwidth, nsquare])
     x, y = catch['next_square']
-    mapset.add(('hall', 'passage', x, y, direction, width, psquare))
+    engine.add(['hall', 'passage', x, y, direction, width, psquare])
     return None
 
 # 20 feet forward, branch to left, 10 feet forward continue
-def passage_table_8_9(maparray, mapset, x, y, direction, width, psquare, die_roll=-1):
-    catch = draw_passage_section(maparray, x, y, direction, width, 4, psquare)
+def passage_table_8_9(engine, x, y, direction, width, psquare, dice):
+    catch = draw_passage_section(engine, x, y, direction, width, 4, psquare)
     if catch['result'] != 'success':
         return catch['blocks']
     x, y = catch['next_square']
     # px, py = back_to_left(x, y, direction, width)
-    px, py = advance(x, y, back(direction), 1)
-    px, py = turn_across(px, py, direction, left(direction), width)
-    nwidth = passage_width_table(die_roll)['width']
-    nsquare = (psquare[0], new_passage_descriptor())
-    mapset.add(('hall', 'passage', px, py, left(direction), nwidth, nsquare))
-    catch = draw_passage_section(maparray, x, y, direction, width, 2, psquare)
+    px, py = turn_across(x, y, direction, left(direction), width)
+    nwidth = passage_width_table(dice[0])['width']
+    catch = draw_passage_section(engine, x, y, direction, width, 2 + nwidth, psquare)
     if catch['result'] != 'success':
         return catch['blocks']
     x, y = catch['next_square']
-    mapset.add(('hall', 'passage', x, y, direction, width, psquare))
+    nsquare = (psquare[0], new_passage_descriptor())
+    engine.add(['hall', 'passage', px, py, left(direction), nwidth, nsquare])
+    engine.add(['hall', 'passage', x, y, direction, width, psquare])
     return None
 
 # Straight 20ft, dead end, 10% chance of secret door
-def passage_table_10(maparray, mapset, x, y, direction, width, psquare, die_roll=-1):
-    catch = draw_passage_section(maparray, x, y, direction, width, 4, psquare)
+# 3rd die is d10
+def passage_table_10(engine, x, y, direction, width, psquare, dice):
+    catch = draw_passage_section(engine, x, y, direction, width, 4, psquare)
     if catch['result'] != 'success':
         return catch['blocks']
     x, y = catch['next_square']
-    if die_roll >= 19:
+    if dice[1] >= 9:
         dx, dy = catch['next_square']
-        dx, dy = advance(dx, dy, turn_positive(direction), middle_value(width, die_roll)-1)
-        mapset.add(('door', 'passage', dx, dy, direction, 1, ('door', 1)))
+        dx, dy = advance(dx, dy, turn_positive(direction), middle_value(width, dice[0])-1)
+        engine.add(['door', 'passage_secret', dx, dy, direction, 1, ('door', -1)])
     return None
 
 # Straight 20ft, left turn, 10 ft
-def passage_table_11_12(maparray, mapset, x, y, direction, width, psquare, die_roll=-1):
-    catch = draw_passage_section(maparray, x, y, direction, width, 4, psquare)
+def passage_table_11_12(engine, x, y, direction, width, psquare, dice):
+    catch = draw_passage_section(engine, x, y, direction, width, 4, psquare)
     if catch['result'] != 'success':
         return catch['blocks']
     px, py = catch['next_square']
-    catch = draw_passage_section(maparray, px, py, direction, width, width, psquare)
+    catch = draw_passage_section(engine, px, py, direction, width, width, psquare)
     if catch['result'] != 'success':
         return catch['blocks']
     if not is_positive(direction):
         px, py = catch['next_square']
         px, py = advance(px, py, back(direction), 1)
     px, py = turn_across(px, py, direction, left(direction), width)
-    catch = draw_passage_section(maparray, px, py, left(direction), width, 2, psquare)
+    catch = draw_passage_section(engine, px, py, left(direction), width, 2, psquare)
     if catch['result'] != 'success':
         return catch['blocks']
     px, py = catch['next_square']
-    mapset.add(('hall', 'passage', px, py, left(direction), width, psquare))
+    engine.add(['hall', 'passage', px, py, left(direction), width, psquare])
     return None
 
 
-def passage_table_13_14(maparray, mapset, x, y, direction, width, psquare, die_roll=-1):
-    catch = draw_passage_section(maparray, x, y, direction, width, 4, psquare)
+def passage_table_13_14(engine, x, y, direction, width, psquare, dice):
+    catch = draw_passage_section(engine, x, y, direction, width, 4, psquare)
     if catch['result'] != 'success':
         return catch['blocks']
     px, py = catch['next_square']
-    catch = draw_passage_section(maparray, px, py, direction, width, width, psquare)
+    catch = draw_passage_section(engine, px, py, direction, width, width, psquare)
     if catch['result'] != 'success':
         return catch['blocks']
     if not is_positive(direction):
         px, py = catch['next_square']
         px, py = advance(px, py, back(direction), 1)
     px, py = turn_across(px, py, direction, right(direction), width)
-    catch = draw_passage_section(maparray, px, py, right(direction), width, 2, psquare)
+    catch = draw_passage_section(engine, px, py, right(direction), width, 2, psquare)
     if catch['result'] != 'success':
         return catch['blocks']
     px, py = catch['next_square']
-    mapset.add(('hall', 'passage', px, py, right(direction), width, psquare))
+    engine.add(['hall', 'passage', px, py, right(direction), width, psquare])
     return None
 
 
-def passage_table_15_19(maparray, mapset, x, y, direction, width, psquare, die_roll=-1):
-    mapset.add(('room', 'passage', x, y, direction, width, psquare))
+def passage_table_15_19(engine, x, y, direction, width, psquare, dice):
+    engine.add(['room', 'passage', x, y, direction, width, psquare])
 
 
-def passage_table_20(maparray, mapset, x, y, direction, width, psquare, die_roll=-1):
-    mapset.add(('stairs', 'passage', x, y, direction, width, psquare))
+def passage_table_20(engine, x, y, direction, width, psquare, dice):
+    engine.add(['stairs', 'passage', x, y, direction, width, psquare])
 
 
-def dispatch_passage(maparray, mapset, element, die_roll, die_roll2):
+def dispatch_passage(engine, element, dice):
     x = element[2]
     y = element[3]
     direction = element[4]
     width = element[5]
     psquare = element[6]
     if psquare[1] == -1:
-        width = passage_width_table(die_roll2)
+        pass
         # add new passage to roomlist
-    if die_roll <= 2:
-        passage_table_1_2(maparray, mapset, x, y, direction, width, psquare, die_roll2)
+    die_roll = dice[0]
+    dice = dice[1:]
+        # bit of a hack, width is a tuple
+    if element[1] == "draw":
+        draw_passage_section(engine, x, y, direction, *width, psquare)
+    elif die_roll <= 2:
+        passage_table_1_2(engine, x, y, direction, width, psquare, dice)
     elif die_roll <= 3:
-        passage_table_3(maparray, mapset, x, y, direction, width, psquare, die_roll2)
+        passage_table_3(engine, x, y, direction, width, psquare, dice)
     elif die_roll <= 4:
-        passage_table_4(maparray, mapset, x, y, direction, width, psquare, die_roll2)
+        passage_table_4(engine, x, y, direction, width, psquare, dice)
     elif die_roll <= 5:
-        passage_table_5(maparray, mapset, x, y, direction, width, psquare, die_roll2)
+        passage_table_5(engine, x, y, direction, width, psquare, dice)
     elif die_roll <= 7:
-        passage_table_6_7(maparray, mapset, x, y, direction, width, psquare, die_roll2)
+        passage_table_6_7(engine, x, y, direction, width, psquare, dice)
     elif die_roll <= 9:
-        passage_table_8_9(maparray, mapset, x, y, direction, width, psquare, die_roll2)
+        passage_table_8_9(engine, x, y, direction, width, psquare, dice)
     elif die_roll <= 10:
-        passage_table_10(maparray, mapset, x, y, direction, width, psquare, die_roll2)
+        passage_table_10(engine, x, y, direction, width, psquare, dice)
     elif die_roll <= 12:
-        passage_table_11_12(maparray, mapset, x, y, direction, width, psquare, die_roll2)
+        passage_table_11_12(engine, x, y, direction, width, psquare, dice)
     elif die_roll <= 14:
-        passage_table_13_14(maparray, mapset, x, y, direction, width, psquare, die_roll2)
+        passage_table_13_14(engine, x, y, direction, width, psquare, dice)
     elif die_roll <= 19:
-        passage_table_15_19(maparray, mapset, x, y, direction, width, psquare, die_roll2)
+        passage_table_15_19(engine, x, y, direction, width, psquare, dice)
     else:
-        passage_table_20(maparray, mapset, x, y, direction, width, psquare, die_roll2)
+        passage_table_20(engine, x, y, direction, width, psquare, dice)
 
 # allocate new identifier for descriptor table, add description
 # worlds of potential here

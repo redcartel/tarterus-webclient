@@ -266,7 +266,10 @@ class MapArray(list):
                 self[ind[i]][c] = arry[i % len(arry)]  # with MapVector []=
 
     # TODO: MAKE MORE ROBUST WITH RANGE NOTATION
-    def squares(self, x, y, w, h):
+    def squares(self, x=0, y=0, w=0, h=0):
+        if (x, y, w, h) == (0, 0, 0, 0):
+            w = self.w
+            h = self.h
         for r in range(y, y+h):
             for c in range(x, x+w):
                 yield self[r][c]

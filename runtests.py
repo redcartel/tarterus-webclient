@@ -1,6 +1,7 @@
 from tarterus.maparray import MapArray
 from tarterus import passage
 from tarterus.engine import Engine, PendingList
+from tarterus import room
 
 
 def engine_tests():
@@ -36,21 +37,32 @@ def engine_tests():
     assert any(x is True for x in results), "random test failed"
     assert not all(x is True for x in results), "random test failed"
 
+    e.send(["set_params", {"w": 80, "h": 40, "pop_mode": "queue"}])
+    e.send(['clear'])
+    e.add(['hall', 'start', 40, 30, "n", 4, ('hall', 1)])
+    e.send(["step_with_command", {"dice": [8, 9]}])
+    e.send(["step_with_command", {"dice": [11]}])
+    e.send(["step_with_command", {"dice": [17]}])
+    e.send(["step_with_command", {"dice": [11]}])
+    e.send(["step_with_command", {"dice": [11]}])
+    e.send(["step_with_command", {"dice": [11]}])
+    e.send(["step_with_command", {"dice": [11]}])
+
+    e.send(['clear'])
+    e.add(['hall', 'start', 20, 1, "s", 4, ('hall', 1)])
+    e.add(['hall', 'start', 40, 1, "s", 4, ('hall', 2)])
+    e.add(['hall', 'start', 60, 1, "s", 4, ('hall', 3)])
+    e.add(['hall', 'start', 78, 15, "w", 4, ('hall', 4)])
+    e.add(['hall', 'start', 78, 30, "w", 4, ('hall', 5)])
+    e.add(['hall', 'start', 40, 38, "n", 4, ('hall', 6)])
+    e.add(['hall', 'start', 20, 38, "n", 4, ('hall', 7)])
+    e.add(['hall', 'start', 1, 15, "e", 4, ('hall', 8)])
+    e.gen_map()
+    print(e)
+
+
 def passage_tests():
     print("Tests: ")
-    # m = MapArray(('void', 0), (10, 6))
-    # r = passage.draw_passage_section(m, 1, 1, 'e', 4, 5, ('hall', 1))
-    # print("draw_passage_section 1,1 w:5 l:5 d:e")
-    # print(m)
-    # print("returns : " + str(r))
-    # m = MapArray(('void', 0), (4, 8))
-    # r = passage.draw_passage_section(m, 1, 1, 's', 2, 4, ('hall', 1))
-    # print("draw_passage_section 1,1 w:2 l:4, d:s")
-    # print(m)
-    # print("returns : " + str(r))
-    # more to do here
-
-    
 
     print("turn_across")
     assert (6, 1) == passage.turn_across(1, 1, 'n', 'e', 5)
@@ -63,81 +75,182 @@ def passage_tests():
     assert (1, 6) == passage.turn_across(1, 1, 'w', 's', 5)
 
     print("draw_passage_section")
-    m = MapArray(('void', 0), (10, 10))
-    ms = set()
-    passage.draw_passage_section(m, 8, 1, 'w', 4, 5, ('hall', 1))
-    # print(m)
+    e = Engine({"w": 10, "h": 10, "pop_mode": "queue"})
+    # passage.draw_passage_section(m, 8, 1, 'w', 4, 5, ('hall', 1))
+    e.step()
+    e.add(['hall', 'draw', 8, 1, 'w', (4, 5), ('hall', 1)])
+    e.step()
+    assert(e.maparray[4, 4] == ('hall', 1))
+    # print(e)
 
-    m = MapArray(('void', 0), (10, 10))
-    ms = set()
+    # passage table 1/2
+    print("passage_table_1_2")
+    e.send(['clear'])
+    e.add(['hall', 'start', 4, 1, 's', 2, ('hall', 1)])
+    e.send(["step_with_command", {"dice": [2, 7]}])
+    assert e.maparray[5, 6] == ('hall', 1), repr(e.maparray[5, 6])
+    assert ['hall', 'passage', 4, 7, 's', 2, ('hall', 1)] in e.pending,\
+        str(e.pending)
+
+    # passage table 3
+    print("passage_table_3")
+    e.send(['clear'])
+    e.add(['hall', 'start', 1, 8, 'n', 4, ('hall', 1)])
+    e.send(["step_with_command", {"dice": [3, 7]}])
+    assert e.maparray[4, 3] == ('hall', 1),\
+        repr(e.maparray[8, 3])
+    assert ['door', 'passage', 5, 4, 'e', 1, ('door', -1)] in e.pending,\
+        str(e.pending)
+    assert ['hall', 'passage', 1, 2, 'n', 4, ('hall', 1)] in e.pending,\
+        str(e.pending)
+
+    # passage table 4
+    print("passage_table_4")
+    e.send(['clear'])
+    e.add(['hall', 'start', 5, 8, 'n', 4, ('hall', 1)])
+    e.send(["step_with_command", {"dice": [4, 7]}])
+    assert e.maparray[8, 3] == ('hall', 1), repr(e.maparray[8, 3])
+    assert ['door', 'passage', 4, 4, 'w', 1, ('door', -1)] in e.pending,\
+        str(e.pending)
+    assert ['hall', 'passage', 5, 2, 'n', 4, ('hall', 1)] in e.pending,\
+        str(e.pending)
+
+    # passage table 5
+    e.send(['clear'])
     print("passage_table_5")
-    r = passage.passage_table_5(m, ms, 1, 1, 'e', 6, ('hall', 1), 7)
-    assert ('door', 'passage', 5, 4, 'e', 1, ('door', 1)) in ms, str(ms)
-    passage.dispatch_door(m, ms, ms.pop())
-    # print(m)
-    m = MapArray(('void', 0), (10, 10))
-    ms = set()
-    r = passage.passage_table_5(m, ms, 8, 1, 'w', 6, ('hall', 1), 4)
-    # print(m)
+    e.add(['hall', 'start', 1, 1, 'e', 6, ('hall', 1)])
+    e.send(["step_with_command", {"dice": [5, 7]}])
+    assert e.maparray[4, 6] == ("hall", 1)
+    assert ['door', 'passage', 5, 4, 'e', 1, ('door', -1)] in e.pending,\
+        str(e.pending)
 
     # passage table 6/7
-    m = MapArray(('void', 0), (10, 10))
-    ms = set()
-    print("passage_table_6_7(., ., 1, 5, 'e', 2, ('hall', 1), 7)")
-    r = passage.passage_table_6_7(m, ms, 1,5,'e',2,('hall', 1), 7)
-    assert r == None
-    assert ('hall', 'passage', 7, 5, 'e', 2, ('hall', 1)) in ms, str(ms)
-    assert ('hall', 'passage', 4, 7, 's', 2, ('hall', 1)) in ms, str(ms)
-    
+    e.send(['clear'])
+    print("passage_table_6_7")
+    e.add(['hall', 'start', 8, 2, 'w', 6, ('hall', 1)])
+    e.send(["step_with_command", {"dice": [7, 2]}])
+    assert e.maparray[2, 5] == ('hall', 1), repr(e.maparray[2, 5])
+    assert e.maparray[1, 5] == ('void', 0), repr(e.maparray[1, 5])
+    assert ['hall', 'passage', 4, 1, 'n', 1, ('hall', 1)] in e.pending,\
+        str(e.pending)
+    assert ['hall', 'passage', 1, 2, 'w', 6, ('hall', 1)] in e.pending,\
+        str(e.pending)
+
     # passage table 8/9
-    m = MapArray(('void', 0), (10, 10))
-    ms = set()
-    print("passage_table_8_9(., ., 1, 5, 'e', 2, ('hall', 1), 7)")
-    r = passage.passage_table_8_9(m, ms, 1,5,'e',2,('hall', 1), 7)
-    assert r == None
-    assert ('hall', 'passage', 7, 5, 'e', 2, ('hall', 1)) in ms, str(ms)
-    assert ('hall', 'passage', 4, 4, 'n', 2, ('hall', 1)) in ms, str(ms)
+    e.send(['clear'])
+    print("passage_table_8_9")
+    e.add(['hall', 'start', 8, 2, 'w', 4, ('hall', 1)])
+    e.send(['step_with_command', {"dice": [8, 7]}])
+    assert e.maparray[2, 5] == ('hall', 1), repr(e.maparray[2, 5])
+    assert e.maparray[0, 5] == ('void', 0), repr(e.maparray[1, 4])
+    assert ['hall', 'passage', 4, 6, 's', 2, ('hall', 1)] in e.pending,\
+        str(e.pending)
+    assert ['hall', 'passage', 0, 2, 'w', 4, ('hall', 1)] in e.pending,\
+        str(e.pending)
 
     # passage table 10
-    m = MapArray(('void', 0), (10, 10))
-    ms = set()
-    print("passage_table_10()")
-    r = passage.passage_table_10(m, ms, 1, 1, 'e',4,('hall', 1), 20)
-    assert ('door', 'passage', 5, 2, 'e', 1, ('door', 1)) in ms, str(ms)
+    e.send(['clear'])
+    print("passage_table_10")
+    e.add(['hall', 'start', 1, 8, 'n', 8, ('hall', 1)])
+    e.send(["step_with_command", {"dice": [10, 11, 9]}])
+    assert e.maparray[8, 5] == ('hall', 1), repr(e.maparray[8, 5])
+    assert ['door', 'passage_secret', 5, 4, 'n', 1, ('door', -1)]\
+        in e.pending, str(e.pending)
 
     # passage table 11_12
     print("passage_table_11_12")
-    m = MapArray(('void', 0), (10, 10))
-    ms = set()
-    r = passage.passage_table_11_12(m, ms, 1, 5, 'e', 4, ('hall', 1))
-    assert ('hall', 'passage', 5, 2, 'n', 4, ('hall', 1)) in ms, str(ms)
-    m = MapArray(('void', 0), (10, 10))
-    ms = set()
-    r = passage.passage_table_11_12(m, ms, 1, 1, 's', 4, ('hall', 1))
-    assert ('hall', 'passage', 7, 5, 'e', 4, ('hall', 1)) in ms, str(ms)
-    m = MapArray(('void', 0), (10, 10))
-    ms = set()
-    r = passage.passage_table_11_12(m, ms, 8, 1, 'w', 4, ('hall', 1))
-    # print(m)
-    assert ('hall', 'passage', 1, 7, 's', 4, ('hall', 1)) in ms, str(ms)
-    m = MapArray(('void', 0), (10, 10))
-    ms = set()
-    r = passage.passage_table_11_12(m, ms, 5, 8, 'n', 4, ('hall', 1))
-    # print(m)
-    assert ('hall', 'passage', 2, 1, 'w', 4, ('hall', 1)) in ms, str(ms)
+    e.send(['clear'])
+    e.add(['hall', 'start', 1, 5, 'e', 4, ('hall', 1)])
+    e.send(['step_with_command', {"dice": [11, 3]}])
+    assert ['hall', 'passage', 5, 2, 'n', 4, ('hall', 1)] in e.pending,\
+        str(e.pending)
 
-    # passage table 13_14 
+    e.send(['clear'])
+    e.add(['hall', 'start', 1, 1, 's', 4, ('hall', 1)])
+    e.send(['step_with_command', {"dice": [11, 3]}])
+    assert ['hall', 'passage', 7, 5, 'e', 4, ('hall', 1)] in e.pending,\
+        str(e.pending)
+
+    e.send(['clear'])
+    e.add(['hall', 'start', 8, 1, 'w', 4, ('hall', 1)])
+    e.send(['step_with_command', {"dice": [11, 3]}])
+    assert ['hall', 'passage', 1, 7, 's', 4, ('hall', 1)] in e.pending,\
+        str(e.pending)
+
+    e.send(['clear'])
+    e.add(['hall', 'start', 5, 8, 'n', 4, ('hall', 1)])
+    e.send(['step_with_command', {"dice": [11, 3]}])
+    assert ['hall', 'passage', 2, 1, 'w', 4, ('hall', 1)] in e.pending,\
+        str(e.pending)
+
+    # passage table 13_14
     print("passage_table_13_14")
+    e.send(['clear'])
+    e.add(['hall', 'start', 5, 1, 's', 2, ('hall', 1)])
+    e.send(['step_with_command', {"dice": [13, 3]}])
+    assert ['hall', 'passage', 2, 5, 'w', 2, ('hall', 1)] in e.pending,\
+        str(e.pending)
+
+    e.send(['clear'])
+    e.add(['hall', 'start', 8, 5, 'w', 2, ('hall', 1)])
+    e.send(['step_with_command', {"dice": [13, 3]}])
+    assert ['hall', 'passage', 3, 2, 'n', 2, ('hall', 1)] in e.pending,\
+        str(e.pending)
+
+
+def room_tests():
+    print("room.py")
+    e = Engine({"w": 80, "h": 40, "pop_mode": "queue"})
+    e.step()
+
+    # test draw_room
     m = MapArray(('void', 0), (10, 10))
-    ms = set()
-    r = passage.passage_table_13_14(m, ms, 5, 1, 's', 2, ('hall', 1))
-    assert ('hall', 'passage', 2, 5, 'w', 2, ('hall', 1)) in ms, str(ms)
+    m[5, 5] = ('vwal', 1)
+    print("draw_room")
+    _ = room.draw_room(m, 1, 1, 8, 8, ('room', 1))
+    assert _ is True
+    assert m[1, 5] == m[8, 7] == ('vwal', 1)
+    assert m[1, 1] == m[8, 1] == ('tcor', 1)
+    assert m[8, 8] == m[1, 8] == ('bcor', 1)
+    assert m[5, 1] == m[2, 8] == ('hwal', 1)
+    assert m[2, 2] == m[7, 7] == ('room', 1)
+    # attempt to draw room with blocking tile in the way
     m = MapArray(('void', 0), (10, 10))
-    ms = set()
-    r = passage.passage_table_13_14(m, ms, 8, 5, 'w', 2, ('hall', 1))
-    # print(m)
-    assert ('hall', 'passage', 3, 2, 'n', 2, ('hall', 1)) in ms, str(ms)
+    m[5, 5] = ('hall', 1)
+    _ = room.draw_room(m, 0, 0, 10, 10, 1)
+    assert _ is False
+    # draw room from dispatch
+    room.dispatch_room(e, ["room", "draw", 1, 1, "e", (8, 8), ("room", 1)],
+                       [1, 5, 6])
+    m = e.maparray
+    assert m[1, 5] == m[8, 7] == ('vwal', 1)
+    assert m[1, 1] == m[8, 1] == ('tcor', 1)
+    assert m[8, 8] == m[1, 8] == ('bcor', 1)
+    assert m[5, 1] == m[2, 8] == ('hwal', 1)
+    assert m[2, 2] == m[7, 7] == ('room', 1)
+
+    # test find_loc
+    print("find_loc")
+    m = MapArray(('void', 0), (40, 40))
+    x, y = room.find_loc(m, 20, 1, 20, 10, "s", 1, [6, 5])
+    assert (x, y) == (10, 1), str((x, y))
+    x, y = room.find_loc(m, 20, 10, 20, 10, "n", 1, [6, 5])
+    assert (x, y) == (10, 1), str((x, y))
+    m[11, 2] = ('hall', 1)
+    x, y = room.find_loc(m, 20, 1, 20, 10, "s", 1, [6, 5])
+    assert (x, y) == (19, 1), str((x, y))
+    m[35, 2] = ('room', 2)
+    x, y = room.find_loc(m, 20, 1, 20, 10, "s", 1, [6, 5])
+    assert (x, y) == (15, 1), str((x, y))
+    x, y = room.find_loc(m, 38, 20, 30, 15, "w", 1, [3, 2])
+    print(x, y)
+    x, y = room.find_loc(m, 10, 12, 12, 12, "n", 4, [5, 6])
+    # x, y = room.find_loc(m, 10, 12, 12, 12, "n", 4, [5, 6])
+    # x, y = room.find_loc(m, 38, 20, 30, 15, "w", 1, [3, 2])
+    assert (x, y) == (9, 1), str((x, y))
+
 
 if __name__ == "__main__":
     engine_tests()
     passage_tests()
+    room_tests()

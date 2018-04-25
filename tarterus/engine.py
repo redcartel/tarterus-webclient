@@ -1,5 +1,6 @@
 from tarterus.maparray import MapArray
 from tarterus.passage import dispatch_passage, dispatch_door
+from tarterus.passage import DICE_ARRAY as passage_dice
 from random import randint
 # from tarterus.room import
 # dispatch_room, dispatch_stairs, grow_room, starting_area
@@ -35,7 +36,7 @@ class Engine():
         while True:
             command = yield ret  # PEP 342
             if command is None and len(self.pending) > 0:
-                self.dispatch(self.pending.pop(), None)
+                self.dispatch(self.pending.pop(), {})
                 ret = len(self.pending)
             elif command is None and self.dont_terminate is False:
                 return
@@ -46,8 +47,8 @@ class Engine():
     # respect dont_terminate. Should never create an infinite loop.
     def gen_map(self):
         the_engine = self.the_engine()
-        the_engine.next()
-        for ndispatches in self.the_engine():
+        next(the_engine)
+        for ndispatches in the_engine:
             if ndispatches == 0:
                 break
 
@@ -59,10 +60,13 @@ class Engine():
     def send(self, command):
         return self.engine.send(command)
 
+    def add(self, element):
+        self.pending.add(element)
+
     # Create a list of die roll results from a vector of the numbers of sides
     # of each die. All random number generation in the map generation process
     # is handled by this method and in the random pop method of PendingList
-    def roll_dice(dice, forced_rolls=[]):
+    def roll(self, dice, forced_rolls=[]):
         ret = []
         for i, nsides in enumerate(dice):
             try:
@@ -72,13 +76,27 @@ class Engine():
         return ret
 
     def dispatch(self, element, command={}):
+        if element[0] == 'describe':
+            pass
+        
         if element[0] == 'door':
-            dice = self.roll([20, 20], command.get("dice", []))
-            dispatch_door(self, element, dice)
+            pass
+            # dice = self.roll(door_dice, command.get("dice", []))
+            # dispatch_door(self, element, dice)
 
         if element[0] == 'hall':
-            dice = self.roll([20, 20], command.get("dice", []))
+            dice = self.roll(passage_dice, command.get("dice", []))
             dispatch_passage(self, element, dice)
+        
+        if element[0] == 'populate':
+            pass
+
+        if element[0] == 'room':
+            pass
+
+        if element[0] == 'stairs':
+            pass
+
 
     def __str__(self):
         return """Engine:
@@ -90,7 +108,7 @@ pending elements:
 {}""".format(self.maparray, self.descriptions, self.pending)
 
 
-# COMMANDS:
+# COMMANDS
 # ['step']                              pop an element & dispatch
 # ['add', element]                      add an element to the list
 # ['insert', index, element]            insert element at position in list
@@ -105,6 +123,8 @@ pending elements:
 #                                           parameters
 # ['set_params']                        reset the parameters from initiation
 # ['get']                               get {maparray, pending, descriptions
+# ['in', element]                       boolean, if an element is in the
+#                                           pending list
     def dispatch_command(self, command):
         if command is None:
             pass
@@ -148,6 +168,8 @@ pending elements:
                     "descriptions": self.descriptions,
                     "pending": self.pending
                 }
+        elif command[0] == 'in':
+            return command[0] in self.pending.items
 
 
 # PendingList
