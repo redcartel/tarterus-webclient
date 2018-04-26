@@ -6,7 +6,7 @@ from tarterus import room
 
 def engine_tests():
     print("Engine tests:")
-    e = Engine({"w": 80, "h": 40, "pop_mode": "queue"})
+    e = Engine({"w": 80, "h": 40, "pop_mode": "queue", "log": True})
     assert e.pending.pop == e.pending.queue_pop
     e.step()
     assert isinstance(e.send(["get"])['maparray'], MapArray), str(e)
@@ -19,6 +19,12 @@ def engine_tests():
     assert _[0] == "hall", str(_)
     _ = e.pending.pop()
     assert _[0] == "hall", str(_)
+
+    print("Test logging")
+    e = Engine({"w": 80, "h": 40, "pop_mode": "queue", "log": True})
+    e.step()
+    e.send(["log", "testing_one_two_three"])
+    print(e.log_messages)
 
 # test that pop is random with default construction
 # 1 in 2^16 chance that this test fails erroneously
@@ -37,8 +43,8 @@ def engine_tests():
     assert any(x is True for x in results), "random test failed"
     assert not all(x is True for x in results), "random test failed"
 
-    e.send(["set_params", {"w": 80, "h": 40, "pop_mode": "queue"}])
-    e.send(['clear'])
+    e = Engine({"w": 80, "h": 40, "pop_mode": "queue", "log": True})
+    e.step()
     e.add(['hall', 'start', 40, 30, "n", 4, ('hall', 1)])
     e.send(["step_with_command", {"dice": [8, 9]}])
     e.send(["step_with_command", {"dice": [11]}])
@@ -59,6 +65,12 @@ def engine_tests():
     e.add(['hall', 'start', 1, 15, "e", 4, ('hall', 8)])
     e.gen_map()
     print(e)
+    print("\n".join(str(m) for m in e.log_messages))
+
+    print("test loaded dice")
+    e.send(["clear"])
+    print(e.send(["load_dice", [1, 2, 3, 4, 5]]))
+    print(e.send(["roll", [20, 20, 20, 20, 20, 10000]]))
 
 
 # TODO WRITE TESTS FOR PASSAGE DRAWING w/ COLLISION
@@ -262,12 +274,41 @@ def room_tests():
     assert (x, y) == (23, 19), str((x, y))
 
     # room tables
-    e.send(['clear'])
+    e = Engine({"w": 80, "h": 40,
+                "pop_mode": "queue", "log": True, "dont_terminate": True})
+    e.step()
     e.add(['room', 'door', 10, 10, "n", 1, ('room', 1)])
-    e.send(['step_with_command', {"dice": [13, 3]}])
-    print(e)
-
-    
+    e.add(['room', 'passage', 30, 10, "s", 2, ('room', 1)])
+    e.add(['hall', 'start', 50, 38, "n", 4, ('hall', 2)])
+    e.add(['hall', 'start', 70, 1, "s", 4, ('hall', 2)])
+    e.send(['load_dice', [13, 6, 5,
+                          13, 7, 2,
+                          11, 1, 1,
+                          1, 1, 1,
+                          15, 1, 1,
+                          13, 7, 2,
+                          6, 1, 1,
+                          15, 1, 1,
+                          15, 1, 1,
+                          8, 5, 7
+                          ]])
+    e.gen_map()
+    print("\n".join(str(m) for m in e.log_messages))
+    # print(e)
+    e = Engine({"w": 80, "h": 40,
+                "pop_mode": "queue", "log": True, "dont_terminate": True})
+    e.step()
+    e.add(['hall', 'start', 20, 1, 's', 4, ('hall', 1)])
+    e.send(['load_dice', [7, 2, 10,
+                          8, 7, 9,
+                          15, 2, 2,
+                          19, 11, 9,
+                          1, 8, 7,
+                          14, 2, 2,
+                          11, 2, 3]])
+    e.gen_map()
+    # print(e)
+    # print("\n".join(str(m) for m in e.log_messages))
 
 
 if __name__ == "__main__":

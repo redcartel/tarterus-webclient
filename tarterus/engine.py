@@ -1,5 +1,5 @@
 from tarterus.maparray import MapArray
-from tarterus.passage import dispatch_passage, dispatch_door
+from tarterus.passage import dispatch_passage  # , dispatch_door
 from tarterus.passage import DICE_ARRAY as passage_dice
 from random import randint
 from tarterus.room import dispatch_room
@@ -20,14 +20,28 @@ from tarterus.room import DICE_ARRAY as room_dice
 class Engine():
 
     def __init__(self, params):
-        w, h = params['w'], params['h']
         self.params = params
-        self.maparray = MapArray(('void', 0), (w, h))
-        self.pending = PendingList(params.get("pop_mode", "random"))
-        self.dont_terminate = params.get("dont_terminate", False)
-        self.max_steps = params.get("max_steps", -1)
+        self.log_messages = []
+        self.process_params()
+
+        self.maparray = MapArray(("void", 0), (self.w, self.h))
+        self.loaded_dice = []
         self.descriptions = [{}]
+
         self.engine = self.the_engine()
+
+    def process_params(self):
+        self.w = self.params['w']
+        self.h = self.params['h']
+        self.pending = PendingList(self.params.get("pop_mode", "random"))
+        if self.params.get("log", False) is True:
+            self.log = self.yes_log
+        else:
+            self.log = self.no_log
+        self.dont_terminate = self.params.get("dont_terminate", False)
+        self.max_steps = self.params.get("max_steps", -1)
+
+        self.log("::Parameters Loaded\n\t{}".format(self.params))
 
     # Coroutine generator. At each step returns the length of pending.
     # .__next__() will iterate the generation by popping an element from
@@ -37,12 +51,28 @@ class Engine():
         while True:
             command = yield ret  # PEP 342
             if command is None and len(self.pending) > 0:
+                self.log(":: Step()")
                 self.dispatch(self.pending.pop(), {})
                 ret = len(self.pending)
             elif command is None and self.dont_terminate is False:
+                self.log(":: No Action")
                 return
             elif command is not None:
+                self.log(":: Command:\n\t{}".format(command))
                 ret = self.dispatch_command(command)
+
+    # Default log function, does nothing
+    def no_log(self, message):
+        pass
+
+    def yes_log(self, message):
+        self.log_messages.append(message)
+
+    def get_log(self):
+        return self.log_messages
+
+    def print_log(self, message):
+        print(message)
 
     # Generate the map by looping through the engine with no commands. Does not
     # respect dont_terminate. Should never create an infinite loop.
@@ -62,6 +92,7 @@ class Engine():
         return self.engine.send(command)
 
     def add(self, element):
+        self.log(":: Add\n\t{}".format(element))
         self.pending.add(element)
 
     # Create a list of die roll results from a vector of the numbers of sides
@@ -73,13 +104,18 @@ class Engine():
             try:
                 ret.append(forced_rolls[i])
             except IndexError:
-                ret.append(randint(1, nsides))
+                try:
+                    ret.append(self.loaded_dice[0])
+                    self.loaded_dice = self.loaded_dice[1:]
+                except IndexError:
+                    ret.append(randint(1, nsides))
+        self.log("::Dice rolled\n\t{}".format(ret))
         return ret
 
     def dispatch(self, element, command={}):
         if element[0] == 'describe':
             pass
-        
+
         if element[0] == 'door':
             pass
             # dice = self.roll(door_dice, command.get("dice", []))
@@ -87,19 +123,19 @@ class Engine():
 
         if element[0] == 'hall':
             dice = self.roll(passage_dice, command.get("dice", []))
+            self.log("::dispatch_passage\n\t{}".format(element))
             dispatch_passage(self, element, dice)
-        
+
         if element[0] == 'populate':
             pass
 
         if element[0] == 'room':
-            print("engine dispatch room")
             dice = self.roll(room_dice, command.get("dice", []))
+            self.log("::dispatch_room\n\t{}".format(element))
             dispatch_room(self, element, dice)
 
         if element[0] == 'stairs':
             pass
-
 
     def __str__(self):
         return """Engine:
@@ -128,51 +164,94 @@ pending elements:
 # ['get']                               get {maparray, pending, descriptions
 # ['in', element]                       boolean, if an element is in the
 #                                           pending list
+# ['load_dice', dice]                   add list of forced die rolls
+# ['roll', sides]
+# ['log', message]
+# ['get_log']
     def dispatch_command(self, command):
         if command is None:
             pass
         elif command[0] == 'step':
             self.dispatch(self.pending.pop())
             return len(self.pending)
+
         elif command[0] == 'add':
             self.pending.add(command[1])
             return len(self.pending)
+
         elif command[0] == 'insert':
             self.pending.insert(command[1], command[2])
             return len(self.pending)
+
         elif command[0] == 'execute':
             self.dispatch(self.pending.ipop(command[1]), None)
             return len(self.pending)
+
         elif command[0] == 'step_with_command':
             self.dispatch(self.pending.pop(), command[1])
             return len(self.pending)
+
         elif command[0] == 'execute_with_command':
             self.dispatch(self.pending.ipop(command[1]), command[2])
             return len(self.pending)
+
         elif command[0] == 'remove':
             self.pending.ipop(command[1])
             return len(self.pending)
+
         elif command[0] == 'replace':
             self.pending[command[1]] = command[2]
             return len(self.pending)
+
+        # Clears everything but the log
         elif command[0] == 'clear':
-            w, h = self.params['w'], self.params['h']
-            self.maparray = MapArray(('void', 0), (w, h))
+            self.log("\n\n:: CLEARING ENGINE")
+            self.maparray = MapArray(('void', 0), (self.w, self.h))
             self.descriptions = []
             self.pending.clear()
             self.pending = PendingList(self.params.get("pop_mode", "random"))
             return None
+
         elif command[0] == 'set_params':
             self.params = command[1]
+            self.process_params()
             return None
+
         elif command[0] == 'get' and len(command) == 1:
             return {
                     "maparray": self.maparray,
                     "descriptions": self.descriptions,
                     "pending": self.pending
                 }
+
         elif command[0] == 'in':
-            return command[0] in self.pending.items
+            return command[1] in self.pending.items
+
+        elif command[0] == 'load_dice':
+            self.loaded_dice = command[1]
+            return None
+
+        elif command[0] == 'roll':
+            try:
+                return self.roll(command[1])
+            except IndexError:
+                return self.roll([20])
+
+        elif command[0] == 'log':
+            self.log(command[1])
+            return None
+
+        elif command[0] == 'get_log':
+            return "\n".join(str(message) for message in self.get_log())
+
+        # this will render the map pretty well non-functional as a map, should
+        # move this into MapArray logic if it is kept at all, but it's a hack
+        # for testing
+        elif command[0] == 'place_grid':
+            for x in range(1, self.w, 5):
+                for y in range(1, self.w, 5):
+                    if self.maparray[x, y][0] == "void":
+                        self.maparray[x, y][0] = "grid"
 
 
 # PendingList
@@ -189,6 +268,8 @@ class PendingList:
             self.pop = self.stack_pop
         if mode == "queue":
             self.pop = self.queue_pop
+        if mode == "middle":
+            self.pop = self.middle_pop
         self.items = list()
 
     def __getitem__(self, i):
@@ -219,6 +300,9 @@ class PendingList:
 
     def queue_pop(self):
         return self.ipop(0)
+
+    def middle_pop(self):
+        return self.ipop(len(self.items) // 2)
 
     def __str__(self):
         return "\n".join("{}:\t{}".format(*e) for e in enumerate(self.items))

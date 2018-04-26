@@ -120,9 +120,9 @@ def place_entrance(maparray, origin, x, y, direction, width, psquare, dice):
         maparray[x, y] = ('door', psquare[1])
     elif origin == "passage":
         if direction in ["e", "w"]:
-            maparray[x, y:y + width - 1] = ('hall', psquare[1])
+            maparray[x, y: y+width] = ('open', psquare[1])
         elif direction in ["n", "s"]:
-            maparray[x, x:x + width - 1] = ('hall', psquare[1])
+            maparray[x: x+width, y] = ('open', psquare[1])
 
 
 # Tables. Currently does not handle over-wide passage entrances well
@@ -130,7 +130,7 @@ def place_entrance(maparray, origin, x, y, direction, width, psquare, dice):
 # 20 x 20 room
 def room_table_1_2(engine, origin, x, y, direction, width, rsquare, dice):
     x0, y0 = find_loc(engine.maparray, x, y, 6, 6, direction, width, dice)
-    if x is not False:
+    if x0 is not False:
         draw_room(engine.maparray, x0, y0, 6, 6, rsquare)
         place_entrance(engine.maparray, origin, x, y,
                        direction, width, rsquare, dice)
@@ -139,18 +139,19 @@ def room_table_1_2(engine, origin, x, y, direction, width, rsquare, dice):
 # 30 x 30 room
 def room_table_3_4(engine, origin, x, y, direction, width, rsquare, dice):
     x0, y0 = find_loc(engine.maparray, x, y, 8, 8, direction, width, dice)
-    if x is not False:
+    if x0 is not False:
         draw_room(engine.maparray, x0, y0, 8, 8, rsquare)
         place_entrance(engine.maparray, origin, x, y,
                        direction, width, rsquare, dice)
     else:
+        print("step_down")
         room_table_1_2(engine, origin, x, y, direction, width, rsquare, dice)
 
 
 # 40 x 40 room
 def room_table_5_6(engine, origin, x, y, direction, width, rsquare, dice):
     x0, y0 = find_loc(engine.maparray, x, y, 10, 10, direction, width, dice)
-    if x is not False:
+    if x0 is not False:
         draw_room(engine.maparray, x0, y0, 10, 10, rsquare)
         place_entrance(engine.maparray, origin, x, y,
                        direction, width, rsquare, dice)
@@ -165,7 +166,7 @@ def room_table_7_9(engine, origin, x, y, direction, width, rsquare, dice):
         a, b = b, a
 
     x0, y0 = find_loc(engine.maparray, x, y, a, b, direction, width, dice)
-    if x is not False:
+    if x0 is not False:
         draw_room(engine.maparray, x0, y0, a, b, rsquare)
         place_entrance(engine.maparray, origin, x, y,
                        direction, width, rsquare, dice)
@@ -173,7 +174,7 @@ def room_table_7_9(engine, origin, x, y, direction, width, rsquare, dice):
 
     a, b = b, a
     x0, y0 = find_loc(engine.maparray, x, y, a, b, direction, width, dice)
-    if x is not False:
+    if x0 is not False:
         draw_room(engine.maparray, x0, y0, a, b, rsquare)
         place_entrance(engine.maparray, origin, x, y,
                        direction, width, rsquare, dice)
@@ -190,7 +191,7 @@ def room_table_10_12(engine, origin, x, y, direction, width, rsquare, dice):
         a, b = b, a
 
     x0, y0 = find_loc(engine.maparray, x, y, a, b, direction, width, dice)
-    if x is not False:
+    if x0 is not False:
         draw_room(engine.maparray, x0, y0, a, b, rsquare)
         place_entrance(engine.maparray, origin, x, y,
                        direction, width, rsquare, dice)
@@ -198,7 +199,9 @@ def room_table_10_12(engine, origin, x, y, direction, width, rsquare, dice):
 
     a, b = b, a
     x0, y0 = find_loc(engine.maparray, x, y, a, b, direction, width, dice)
-    if x is not False:
+    if x0 is not False:
+        a, b = b, a
+        x0, y0 = find_loc(engine.maparray, x, y, a, b, direction, width, dice)
         draw_room(engine.maparray, x0, y0, a, b, rsquare)
         place_entrance(engine.maparray, origin, x, y,
                        direction, width, rsquare, dice)
@@ -215,7 +218,7 @@ def room_table_13_14(engine, origin, x, y, direction, width, rsquare, dice):
         a, b = b, a
 
     x0, y0 = find_loc(engine.maparray, x, y, a, b, direction, width, dice)
-    if x is not False:
+    if x0 is not False:
         draw_room(engine.maparray, x0, y0, a, b, rsquare)
         place_entrance(engine.maparray, origin, x, y,
                        direction, width, rsquare, dice)
@@ -223,7 +226,7 @@ def room_table_13_14(engine, origin, x, y, direction, width, rsquare, dice):
 
     a, b = b, a
     x0, y0 = find_loc(engine.maparray, x, y, a, b, direction, width, dice)
-    if x is not False:
+    if x0 is not False:
         draw_room(engine.maparray, x0, y0, a, b, rsquare)
         place_entrance(engine.maparray, origin, x, y,
                        direction, width, rsquare, dice)
@@ -240,7 +243,7 @@ def room_table_15(engine, origin, x, y, direction, width, rsquare, dice):
         a, b = b, a
 
     x0, y0 = find_loc(engine.maparray, x, y, a, b, direction, width, dice)
-    if x is not False:
+    if x0 is not False:
         draw_room(engine.maparray, x0, y0, a, b, rsquare)
         place_entrance(engine.maparray, origin, x, y,
                        direction, width, rsquare, dice)
@@ -248,7 +251,7 @@ def room_table_15(engine, origin, x, y, direction, width, rsquare, dice):
 
     a, b = b, a
     x0, y0 = find_loc(engine.maparray, x, y, a, b, direction, width, dice)
-    if x is not False:
+    if x0 is not False:
         draw_room(engine.maparray, x0, y0, a, b, rsquare)
         place_entrance(engine.maparray, origin, x, y,
                        direction, width, rsquare, dice)
@@ -258,6 +261,8 @@ def room_table_15(engine, origin, x, y, direction, width, rsquare, dice):
                             width, rsquare, dice)
 
 
+    # NOTE: irregular behavior if passages can have width greater than 8(40 ft)
+    # (40 ft)
 def dispatch_room(engine, element, dice):
     x = element[2]
     y = element[3]
@@ -271,16 +276,41 @@ def dispatch_room(engine, element, dice):
     if origin == "draw":
         draw_room(engine.maparray, x, y, *width, rsquare)
     elif die_roll <= 2:
-        room_table_1_2(engine, origin, x, y, direction, width, rsquare, dice)
+        # 20x20
+        if width <= 4:
+            return room_table_1_2(engine, origin, x, y, direction,
+                                  width, rsquare, dice)
+        elif width <= 6:
+            return room_table_3_4(engine, origin, x, y, direction,
+                                  width, rsquare, dice)
+        elif width <= 8:
+            return room_table_5_6(engine, origin, x, y, direction,
+                                  width, rsquare, dice)
     elif die_roll <= 4:
-        room_table_3_4(engine, origin, x, y, direction, width, rsquare, dice)
+        # 30x30
+        if width <= 6:
+            room_table_3_4(engine, origin, x, y, direction,
+                           width, rsquare, dice)
+        elif width <= 8:
+            room_table_5_6(engine, origin, x, y, direction,
+                           width, rsquare, dice)
     elif die_roll <= 6:
+        # 40x40
         room_table_5_6(engine, origin, x, y, direction, width, rsquare, dice)
     elif die_roll <= 9:
-        room_table_7_9(engine, origin, x, y, direction, width, rsquare, dice)
+        # 20x30
+        if width <= 6:
+            room_table_7_9(engine, origin, x, y, direction,
+                           width, rsquare, dice)
+        elif width <= 8:
+            room_table_10_12(engine, origin, x, y, direction,
+                             width, rsquare, dice)
     elif die_roll <= 12:
+        # 30x40
         room_table_10_12(engine, origin, x, y, direction, width, rsquare, dice)
     elif die_roll <= 14:
+        # 40x50
         room_table_13_14(engine, origin, x, y, direction, width, rsquare, dice)
     elif die_roll <= 15:
+        # 50x80
         room_table_15(engine, origin, x, y, direction, width, rsquare, dice)
