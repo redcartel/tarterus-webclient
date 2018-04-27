@@ -2,6 +2,7 @@ from tarterus.maparray import MapArray
 from tarterus import passage
 from tarterus.engine import Engine, PendingList
 from tarterus import room
+from tarterus import door
 
 
 def engine_tests():
@@ -310,8 +311,20 @@ def room_tests():
     # print(e)
     # print("\n".join(str(m) for m in e.log_messages))
 
+def door_tests():
+    e = Engine({"w": 80, "h": 40, "log": True, "pop_mode": "queue"})
+    m = e.maparray
+    _ = door.position_hall(m, "room", 10, 10, "s", [14, 10])
+    assert _ == (9, 11, 4), str(_)
+    _ = door.position_hall(m, "room", 10, 10, "s", [13, 10])
+    assert _ == (10, 11, 4), str(_)
+    # blocking not working, fix this shit
+    m[9,11] == ("hall", 1)
+    _ = door.position_hall(m, "room", 10, 10, "w", [18, 10])
+    print(_)
 
 if __name__ == "__main__":
     engine_tests()
     passage_tests()
     room_tests()
+    door_tests()

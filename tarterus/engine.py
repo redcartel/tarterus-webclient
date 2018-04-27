@@ -4,6 +4,8 @@ from tarterus.passage import DICE_ARRAY as passage_dice
 from random import randint
 from tarterus.room import dispatch_room
 from tarterus.room import DICE_ARRAY as room_dice
+from tarterus.door import dispatch_door
+from tarterus.door import DICE_ARRAY as door_dice
 # dispatch_room, dispatch_stairs, grow_room, starting_area
 
 

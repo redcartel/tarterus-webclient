@@ -2,7 +2,7 @@
 from tarterus.graphpaper import vector, right, left, back, turn_positive
 from tarterus.graphpaper import is_positive, turn_across
 from tarterus.graphpaper import advance, middle_value  # , empty
-from random import randint
+# from random import randint
 
 DICE_ARRAY = [20, 12, 10]
 
@@ -111,14 +111,12 @@ def draw_passage_section(engine, x, y, direction, width, length, psquare):
 #         return {"result": "blocked", "blocks": []}
 
 
-# TODO columns
+# TODO columns. I guess that's why this is returning a damn dictionary.
 # dieroll = -1 : d12 (passage from passage)
 # dieroll = 20 : d20 (passage from chamber)
 def passage_width_table(die_roll=-1, from_chamber=False):
     if die_roll == -1:
-        die_roll = randint(1, 12)
-    elif die_roll == 20:
-        die_roll = randint(1, 20)
+        raise Exception
 
     if die_roll <= 2:
         return {"width": 1}

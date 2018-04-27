@@ -1,3 +1,4 @@
+
 def vector(direction):
     return_val = {
             'n': (0, -1),
