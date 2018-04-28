@@ -136,6 +136,18 @@ class Engine():
             self.roll_log.append(roll)
         return ret
 
+# TODO: send die rolls from a command to the immediate list
+    def dispatch_immediate(self, command={}):
+        if len(self.immediate_list) > 0:
+            element = self.immediate_list.pop()
+            return self.dispatch(element, command)
+        else:
+            return False
+
+    def immediate_add(self, element):
+        self.log(":: immediate_add\n\t{}".format(element))
+        self.immediate_list.add(element)
+
     def dispatch(self, element, command={}):
         if element[0] == 'describe':
             pass

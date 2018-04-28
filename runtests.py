@@ -7,6 +7,7 @@ from tarterus import door
 # TODO: GENERAL TODOs
 # TODO: Preserve corner pieces when walls write over walls
 
+
 def engine_tests():
     print("Engine tests:")
     e = Engine({"w": 80, "h": 40, "pop_mode": "queue", "log": True})
@@ -343,8 +344,22 @@ def door_tests():
     print(e)
 
 
+def door_passage_tests():
+    e = Engine({"w": 80, "h": 80, "pop_mode": "queue", "log": True})
+    print(passage.place_door_pass(e, 10, 10, "n", 4, [7, 13]))
+    e.maparray[9, 9] = ('hall', 1)
+    print(passage.place_door_pass(e, 10, 10, "n", 4, [7, 13]))
+    e.maparray[12, 9] = ('hall', 1)
+    print(passage.place_door_pass(e, 10, 10, "n", 4, [7, 13]))
+    e.maparray[11, 9] = ('hall', 1)
+    print(passage.place_door_pass(e, 10, 10, "n", 4, [7, 13]))
+    e.maparray[10, 9] = ('hall', 1)
+    print(passage.place_door_pass(e, 10, 10, "n", 4, [7, 13]))
+
+
 if __name__ == "__main__":
     engine_tests()
     # passage_tests()
-    room_tests()
-    door_tests()
+    # room_tests()
+    # door_tests()
+    door_passage_tests()

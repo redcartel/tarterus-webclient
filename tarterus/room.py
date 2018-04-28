@@ -14,6 +14,9 @@ def no_overlap(squares, checked=None):
     if checked is None:
         checked = DONT_OVERLAP_SQUARES
 
+    if checked == 'all':
+        return all(s[0] == 'void' for s in squares)
+
     def not_overlap(msquare):
         if msquare[0] not in checked:
             return True
@@ -79,7 +82,7 @@ def draw_room_at_entrance(maparray, x, y, direction, w, h, offset):
 # passage
 # TODO: more literate code, this is a head-scratcher for sure
 
-def find_loc(maparray, x, y, w, h, direction, width, dice):
+def find_loc(maparray, x, y, w, h, direction, width, dice, checked=None):
     # size of dimension orthogonal to the direction & dimen. in direction
     o_length, d_length = w, h
     if direction in ["e", "w"]:
@@ -109,7 +112,7 @@ def find_loc(maparray, x, y, w, h, direction, width, dice):
             x2, y2 = advance(x, y, o_direction, width - 1)
         if gt_or_eq((x2, y2), (x1, y1), o_direction):
             pass
-        elif not rect_fits(maparray, x0, y0, w, h):
+        elif not rect_fits(maparray, x0, y0, w, h, checked):
             pass
         else:
             return x0, y0

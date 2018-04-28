@@ -88,19 +88,26 @@ def table_passage(engine, origin, x, y, direction, width, dsquare, dice):
     elif simp == "wall":
         engine.maparray[x, y] = dsquare
         x0, y0 = advance(x, y, direction, 1)
-        engine.add(['door', 'door', x0, y0, back(direction), 1, dsquare])
+        engine.immediate_add(['door', 'door', x0, y0,
+                             back(direction), 1, dsquare])
+        engine.dispatch_immediate()
         return True
     elif simp == "simple":
         engine.maparray[x, y] = dsquare
         return True
-    # reach this point, draw the passage
-    x0, y0, width0 = position_hall(engine.maparray, origin, x, y, 
-                                   direction, dice)
-    if x0 is False:
+    # reach this point, other side is void
+    # x0, y0, width0 = position_hall(engine.maparray, origin, x, y,
+    #                               direction, dice)
+    engine.immediate_add(['hall', 'door', x, y,
+                          direction, width, ('hall', -1)])
+    engine.log(":: immediate add door")
+    if engine.dispatch_immediate() is True:
+        engine.log("\tsuccess")
+        engine.maparray[x, y] = dsquare
+        return True
+    else:
+        engine.log("\tfail")
         return False
-    engine.maparray[x, y] = dsquare
-    engine.add(['hall', 'door', x0, y0, direction,  width0, ('hall', 1)])
-    return True
 
 
 # test if a minimal room (20' x 20') will fit originating from the door
@@ -121,8 +128,11 @@ def table_room(engine, origin, x, y, direction, width, dsquare, dice):
     if not room_will_fit(engine, x, y, direction):
         return False
     else:
-        engine.maparray[x, y] = dsquare
-        engine.add(['room', 'door', x, y, direction, 1, ('room', 1)])
+        engine.immediate_add(['room', 'door', x, y, direction, 1, ('room', 1)])
+        if engine.dispatch_immediate():
+            engine.maparray[x, y] = dsquare
+        else:
+            return False
 
 
 def dispatch_door(engine, element, dice):
