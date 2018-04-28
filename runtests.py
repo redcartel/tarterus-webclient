@@ -4,6 +4,8 @@ from tarterus.engine import Engine, PendingList
 from tarterus import room
 from tarterus import door
 
+# TODO: GENERAL TODOs
+# TODO: Preserve corner pieces when walls write over walls
 
 def engine_tests():
     print("Engine tests:")
@@ -46,14 +48,15 @@ def engine_tests():
 
     e = Engine({"w": 80, "h": 40, "pop_mode": "queue", "log": True})
     e.step()
-    e.add(['hall', 'start', 40, 30, "n", 4, ('hall', 1)])
-    e.send(["step_with_command", {"dice": [8, 9]}])
-    e.send(["step_with_command", {"dice": [11]}])
-    e.send(["step_with_command", {"dice": [17]}])
-    e.send(["step_with_command", {"dice": [11]}])
-    e.send(["step_with_command", {"dice": [11]}])
-    e.send(["step_with_command", {"dice": [11]}])
-    e.send(["step_with_command", {"dice": [11]}])
+#     e.step()
+#     e.add(['hall', 'start', 40, 30, "n", 4, ('hall', 1)])
+#     e.send(["step_with_command", {"dice": [8, 9]}])
+#     e.send(["step_with_command", {"dice": [11]}])
+#     e.send(["step_with_command", {"dice": [17]}])
+#     e.send(["step_with_command", {"dice": [11]}])
+#     e.send(["step_with_command", {"dice": [11]}])
+#     e.send(["step_with_command", {"dice": [11]}])
+#     e.send(["step_with_command", {"dice": [11]}])
 
     e.send(['clear'])
     e.add(['hall', 'start', 20, 1, "s", 4, ('hall', 1)])
@@ -311,6 +314,7 @@ def room_tests():
     # print(e)
     # print("\n".join(str(m) for m in e.log_messages))
 
+
 def door_tests():
     e = Engine({"w": 80, "h": 40, "log": True, "pop_mode": "queue"})
     m = e.maparray
@@ -319,12 +323,28 @@ def door_tests():
     _ = door.position_hall(m, "room", 10, 10, "s", [13, 10])
     assert _ == (10, 11, 4), str(_)
     # blocking not working, fix this shit
-    m[9,11] == ("hall", 1)
+    m[9, 11] = ("hall", 1)
     _ = door.position_hall(m, "room", 10, 10, "w", [18, 10])
-    print(_)
+    assert _ == (9, 3, 8)
+    m[9, 3] = ("hall", 1)
+    _ = door.position_hall(m, "room", 10, 10, "w", [18, 10])
+    assert _ == (9, 5, 6)
+    m[9, 9] = ("hall", 1)
+    _ = door.position_hall(m, "room", 10, 10, "w", [18, 10])
+    assert _ == (9, 10, 1)
+
+    e.step()
+    e.send(['clear'])
+    e.add(["door", "room", 20, 20, "n", 1, ('door', 1)])
+    e.send(['load_dice', [15, 1, 1, 1, 1, 1]])
+    print(e)
+    e.step()
+    e.step()
+    print(e)
+
 
 if __name__ == "__main__":
     engine_tests()
-    passage_tests()
+    # passage_tests()
     room_tests()
     door_tests()

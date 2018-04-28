@@ -1,10 +1,17 @@
-from tarterus.graphpaper import vector, right, left, back, turn_positive
-from tarterus.graphpaper import is_positive, turn_across
+from tarterus.graphpaper import back, turn_positive  # , right, left, vector
+# from tarterus.graphpaper import is_positive, turn_across
 from tarterus.graphpaper import advance, middle_value  # , empty
 from tarterus.passage import passage_width_table
+from tarterus.room import find_loc
 
-DICE_ARRAY = [20, 20, 12]
+# TODO: stairs & trapped doors
+DICE_ARRAY = [20, 18, 12]
 
+
+# Position hall: place a hall beyond the door, based on the passage width
+# table. Assumption dice[0] is a d20, dice[1] is a d12
+# searches for a spot not overlapping non-void tiles in the manner of the
+# room placement algorithm (which I'll call 'sliding search')
 def position_hall(maparray, origin, x, y, direction, dice):
     # big passages from rooms
     if origin == "room":
@@ -33,28 +40,103 @@ def position_hall(maparray, origin, x, y, direction, dice):
             else:
                 return x0, y0, 1
         else:
-            offset = middle_value(width, mid_die) % width
-            end_offset = (offset + delta) % width
+            base_offset = middle_value(width, mid_die)
+            offset = base_offset % width
+            end_offset = (base_offset - delta) % width
             while offset != end_offset:
                 x0, y0 = advance(x, y, direction, 1)
                 x0, y0 = advance(x0, y0, back(turn_positive(direction)),
-                                              width-1)
+                                 width-1)
                 x0, y0 = advance(x0, y0, turn_positive(direction), offset)
                 works = True
-                for i in range(width):  
+                for i in range(width):
                     x1, y1 = advance(x0, y0, turn_positive(direction), i)
                     if maparray[x1, y1][0] != "void":
                         works = False
                         break
-                if works == True:
+                if works is True:
                     return x0, y0, width
                 else:
-                    offset = (offset + delta) % width
+                    base_offset = base_offset + delta
+                    offset = base_offset % width
             if width > 2:
                 width = width - 2
             else:
                 width = width - 1
 
 
-def dispatch_door():
-    pass
+def is_simple(maparray, origin, x, y, direction):
+    forbidden_tiles = ['bcor', 'tcor']
+    x0, y0 = advance(x, y, direction, 1)
+    dsquare = maparray[x0, y0][0]
+    if dsquare in forbidden_tiles:
+        return "forbidden"
+    elif dsquare == "void":
+        return "void"
+    elif dsquare in ['hwal', 'vwal']:
+        return "wall"
+    else:
+        return "simple"
+
+
+# TODO: passages from actual door table
+def table_passage(engine, origin, x, y, direction, width, dsquare, dice):
+    simp = is_simple(engine.maparray, origin, x, y, direction)
+    if simp == "forbidden":
+        return False
+    # if the next tile is a wall, make two doors back to back
+    elif simp == "wall":
+        engine.maparray[x, y] = dsquare
+        x0, y0 = advance(x, y, direction, 1)
+        engine.add(['door', 'door', x0, y0, back(direction), 1, dsquare])
+        return True
+    elif simp == "simple":
+        engine.maparray[x, y] = dsquare
+        return True
+    # reach this point, draw the passage
+    x0, y0, width0 = position_hall(engine.maparray, origin, x, y, 
+                                   direction, dice)
+    if x0 is False:
+        return False
+    engine.maparray[x, y] = dsquare
+    engine.add(['hall', 'door', x0, y0, direction,  width0, ('hall', 1)])
+    return True
+
+
+# test if a minimal room (20' x 20') will fit originating from the door
+def room_will_fit(engine, x, y, direction):
+    x, _ = find_loc(engine.maparray, x, y, 6, 6, direction, 1, [5, 6])
+    engine.log(":: room_will_fit : {}, {}, {}".format(x, y, direction))
+    if x is False:
+        engine.log("\tfailed")
+        return False
+    else:
+        engine.log("\tpassed")
+        return True
+
+
+# TODO: add priority elements to the engine queue, draw room immediately after
+# the door
+def table_room(engine, origin, x, y, direction, width, dsquare, dice):
+    if not room_will_fit(engine, x, y, direction):
+        return False
+    else:
+        engine.maparray[x, y] = dsquare
+        engine.add(['room', 'door', x, y, direction, 1, ('room', 1)])
+
+
+def dispatch_door(engine, element, dice):
+    origin = element[1]
+    x = element[2]
+    y = element[3]
+    direction = element[4]
+    width = element[5]
+    dsquare = element[6]
+    die_roll = dice[0]
+    dice = dice[1:]
+    if die_roll <= 8:
+        return table_passage(engine, origin, x, y,
+                             direction, width, dsquare, dice)
+    elif die_roll <= 18:
+        return table_room(engine, origin, x, y,
+                          direction, width, dsquare, dice)

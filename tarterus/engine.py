@@ -6,6 +6,7 @@ from tarterus.room import dispatch_room
 from tarterus.room import DICE_ARRAY as room_dice
 from tarterus.door import dispatch_door
 from tarterus.door import DICE_ARRAY as door_dice
+import json
 # dispatch_room, dispatch_stairs, grow_room, starting_area
 
 
@@ -24,10 +25,11 @@ class Engine():
     def __init__(self, params):
         self.params = params
         self.log_messages = []
+        self.roll_log = []
+        self.loaded_dice = []
         self.process_params()
 
         self.maparray = MapArray(("void", 0), (self.w, self.h))
-        self.loaded_dice = []
         self.descriptions = [{}]
 
         self.engine = self.the_engine()
@@ -35,14 +37,24 @@ class Engine():
     def process_params(self):
         self.w = self.params['w']
         self.h = self.params['h']
+
         self.pending = PendingList(self.params.get("pop_mode", "random"))
+        self.immediate_list = PendingList("stack")
+
+        script_file = self.params.get("script_file", None)
+        if script_file is not None:
+            script_data = json.load(open(script_file))
+            self.loaded_dice = script_data["roll"]
+            self.pending.scripted_ipop = script_data["ipop"]
+
         if self.params.get("log", False) is True:
             self.log = self.yes_log
         else:
             self.log = self.no_log
-        self.dont_terminate = self.params.get("dont_terminate", False)
-        self.max_steps = self.params.get("max_steps", -1)
 
+        self.dont_terminate = self.params.get("dont_terminate", False)
+# does not do anything yet
+        self.max_steps = self.params.get("max_steps", -1)
         self.log("::Parameters Loaded\n\t{}".format(self.params))
 
     # Coroutine generator. At each step returns the length of pending.
@@ -71,7 +83,7 @@ class Engine():
         self.log_messages.append(message)
 
     def get_log(self):
-        return self.log_messages
+        return "\n".join(str(m) for m in self.log_messages)
 
     def print_log(self, message):
         print(message)
@@ -97,6 +109,14 @@ class Engine():
         self.log(":: Add\n\t{}".format(element))
         self.pending.add(element)
 
+    def write_choice_log(self, filename):
+        with open(filename, "w") as f:
+            log_output = {
+                    "roll": self.roll_log,
+                    "ipop": self.pending.ipop_log
+            }
+            json.dump(log_output, f)
+
     # Create a list of die roll results from a vector of the numbers of sides
     # of each die. All random number generation in the map generation process
     # is handled by this method and in the random pop method of PendingList
@@ -112,6 +132,8 @@ class Engine():
                 except IndexError:
                     ret.append(randint(1, nsides))
         self.log("::Dice rolled\n\t{}".format(ret))
+        for roll in ret:
+            self.roll_log.append(roll)
         return ret
 
     def dispatch(self, element, command={}):
@@ -119,34 +141,58 @@ class Engine():
             pass
 
         if element[0] == 'door':
-            pass
-            # dice = self.roll(door_dice, command.get("dice", []))
-            # dispatch_door(self, element, dice)
+            dice = self.roll(door_dice, command.get("dice", []))
+            self.log("::dispatch_door\n\t{}".format(element))
+            return dispatch_door(self, element, dice)
 
         if element[0] == 'hall':
             dice = self.roll(passage_dice, command.get("dice", []))
             self.log("::dispatch_passage\n\t{}".format(element))
-            dispatch_passage(self, element, dice)
+            return dispatch_passage(self, element, dice)
 
         if element[0] == 'populate':
             pass
 
+# this logic should move but, if the room can't be drawn and the origin was a
+# door, erase the door
         if element[0] == 'room':
+            # origin = element[1]
+            # x = element[2]
+            # y = element[3]
+            # origin_square = self.maparray[x, y]
             dice = self.roll(room_dice, command.get("dice", []))
             self.log("::dispatch_room\n\t{}".format(element))
-            dispatch_room(self, element, dice)
+            return dispatch_room(self, element, dice)
+            # self.log("\tres={}, origin={}, origin_square={}".
+            #         format(res, origin, repr(origin_square)))
+            # if res is False and \
+            #         origin == "door" and origin_square[0] == "door":
+            #     self.maparray[x, y] = ('void', 0)
 
         if element[0] == 'stairs':
             pass
 
+    # remove this
+    def init_halls(self):
+        self.add(["hall", "start", 37, 37, "n", 2, ("hall", 1)])
+        self.add(["hall", "start", 39, 38, "e", 2, ("hall", 1)])
+        self.add(["hall", "start", 37, 40, "s", 2, ("hall", 1)])
+        self.add(["hall", "start", 36, 38, "w", 2, ("hall", 1)])
+
     def __str__(self):
+        if len(self.roll_log) > 2:
+            last_roll = self.roll_log[-3:]
+        else:
+            last_roll = self.roll_log
         return """Engine:
 maparray:
 {}
 descriptions:
 {}
+last roll:
+{}
 pending elements:
-{}""".format(self.maparray, self.descriptions, self.pending)
+{}""".format(self.maparray, self.descriptions, last_roll, self.pending)
 
 
 # COMMANDS
@@ -170,6 +216,7 @@ pending elements:
 # ['roll', sides]
 # ['log', message]
 # ['get_log']
+# ['place_grid']
     def dispatch_command(self, command):
         if command is None:
             pass
@@ -253,7 +300,7 @@ pending elements:
             for x in range(1, self.w, 5):
                 for y in range(1, self.w, 5):
                     if self.maparray[x, y][0] == "void":
-                        self.maparray[x, y][0] = "grid"
+                        self.maparray[x, y] = ("grid", 0)
 
 
 # PendingList
@@ -266,6 +313,8 @@ class PendingList:
     def __init__(self, mode="random"):
         if mode == "random":
             self.pop = self.random_pop
+        if mode == "script":
+            self.pop = self.script_pop
         if mode == "stack":
             self.pop = self.stack_pop
         if mode == "queue":
@@ -273,6 +322,8 @@ class PendingList:
         if mode == "middle":
             self.pop = self.middle_pop
         self.items = list()
+        self.ipop_log = []
+        self.scripted_ipop = []
 
     def __getitem__(self, i):
         return self.items[i]
@@ -288,6 +339,7 @@ class PendingList:
 
     # pop the element at index i.
     def ipop(self, i):
+        self.ipop_log.append(i)
         return self.items.pop(i)
 
     def clear(self):
@@ -296,6 +348,12 @@ class PendingList:
     def random_pop(self):
         index = randint(0, len(self.items) - 1)
         return self.ipop(index)
+
+    def script_pop(self):
+        if len(self.scripted_ipop) > 0:
+            item = self.ipop(self.scripted_ipop[0])
+            self.scripted_ipop = self.scripted_ipop[1:]
+            return item
 
     def stack_pop(self):
         return self.ipop(-1)

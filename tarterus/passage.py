@@ -4,7 +4,7 @@ from tarterus.graphpaper import is_positive, turn_across
 from tarterus.graphpaper import advance, middle_value  # , empty
 # from random import randint
 
-DICE_ARRAY = [20, 12, 10]
+DICE_ARRAY = [19, 12, 10]
 
 # TODO: CLEAN THIS UP, IT'S A MESS AND IS THE OPPOSITE OF LITERATE PROGRAMMING
 
@@ -291,8 +291,17 @@ def passage_table_13_14(engine, x, y, direction, width, psquare, dice):
 
 
 def passage_table_15_19(engine, origin, x, y, direction, width, psquare, dice):
-    engine.add(['room', origin, x, y, direction,
-                width, ("room", psquare[1])])
+    if origin == "door":
+        x0, y0 = advance(x, y, back(direction), 1)
+        x1, y1 = x0, y0
+        for i in range(width):
+            x1, y1 = advance(x0, y0, turn_positive(direction), i)
+            if engine.maparray[x1][y1][0] == 'door':
+                break
+        engine.add(['room', origin, x1, y1, direction, 1, ("room", -1)])
+    else:
+        engine.add(['room', origin, x, y, direction,
+                    width, ("room", psquare[1])])
 
 
 def passage_table_20(engine, x, y, direction, width, psquare, dice):
