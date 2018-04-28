@@ -106,38 +106,76 @@ def place_door_pass(engine, x, y, direction, w, dice):
 
 
 def draw_passage_section(engine, x, y, direction, width, length, psquare):
-    origins = [(x, y)]
-    maparray = engine.maparray
-    d_vec = vector(direction)
-    o_vec = vector(turn_positive(direction))
-    for i in range(1, width):
-        origins.append((x + i * o_vec[0], y + i * o_vec[1]))
-    blocks = []
-# after the first block is hit, the rest of the
-# passage advances one more step then the process
-# terminates
+    o_dir = turn_positive(direction)
+    origins = [advance(x, y, o_dir, i) for i in range(width)]
     step_out = False
+    blocks = []
     for i in range(length):
-        for s in origins:
-            target = (s[0] + i * d_vec[0], s[1] + i * d_vec[1])
-            if maparray[target[0], target[1]] != ('void', 0):
-                origins.remove(s)
-                blocks.append(s)
-            elif target[0] <= 0 or target[0] + 1 >= maparray.w or \
-                    target[1] <= 0 or target[1] + 1 >= maparray.h:
-                return {"result": "edge", "blocks": []}
+        new_origins = origins[:]
+        for x0, y0 in origins:
+            x1, y1 = advance(x0, y0, direction, i)
+            if x1 <= 0 or x1 + 1 >= engine.maparray.w:
+                origins.remove((x0, y0))
+            elif y1 <= 0 or y1 + 1 >= engine.maparray.h:
+                origins.remove((x0, y0))
+            elif engine.maparray[x1, y1][0] != 'void':
+                engine.log(":: draw_passage_section block")
+                engine.log("\tblock at {}, remove {}".
+                           format((x1, y1), (x0, y0)))
+                new_origins.remove((x0, y0))
+                blocks.append((x1, y1))
             else:
-                maparray[target[0], target[1]] = psquare
+                engine.maparray[x1, y1] = psquare
+        origins = new_origins
         if step_out is True:
             break
         if len(origins) < width:
             step_out = True
-    if len(blocks) > 0:
-        return {"result": "blocked", "blocks": blocks}
+    if step_out is False:
+        x2, y2 = advance(x, y, direction, length)
+        return { 
+                "result": "success",
+                "next_square": (x2, y2)
+                }
     else:
-        return {"result": "success",
-                "next_square": (x + length * d_vec[0], y + length * d_vec[1])}
+        return {
+                "result": "blocked",
+                "blocks": blocks
+                }
 
+# def draw_passage_section(engine, x, y, direction, width, length, psquare):
+#     origins = [(x, y)]
+#     maparray = engine.maparray
+#     # d_vec = vector(direction)
+#     # o_vec = vector(turn_positive(direction))
+#     for i in range(1, width):
+#         origins.append((x + i * o_vec[0], y + i * o_vec[1]))
+#     blocks = []
+# # after the first block is hit, the rest of the
+# # passage advances one more step then the process
+# # terminates
+#     step_out = False
+#     for i in range(length):
+#         for s in origins:
+#             target = (s[0] + i * d_vec[0], s[1] + i * d_vec[1])
+#             if maparray[target[0], target[1]] != ('void', 0):
+#                 origins.remove(s)
+#                 blocks.append(s)
+#             elif target[0] <= 0 or target[0] + 1 >= maparray.w or \
+#                     target[1] <= 0 or target[1] + 1 >= maparray.h:
+#                 return {"result": "edge", "blocks": []}
+#             else:
+#                 maparray[target[0], target[1]] = psquare
+#         if step_out is True:
+#             break
+#         if len(origins) < width:
+#             step_out = True
+#     if len(blocks) > 0:
+#         return {"result": "blocked", "blocks": blocks}
+#     else:
+#         return {"result": "success",
+#                 "next_square": (x + length * d_vec[0], y + length * d_vec[1])}
+# 
 
 # NOTE: Drawing passages only if the way is completely clear might be a toggle
 #   option to generate sparser maps. For a later version
