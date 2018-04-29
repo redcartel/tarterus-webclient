@@ -5,6 +5,7 @@ from tarterus.passage import passage_width_table
 from tarterus.room import find_loc
 
 # TODO: stairs & trapped doors
+# TODO: "blocking void" & test if door placement is on an empty square
 DICE_ARRAY = [20, 18, 12]
 
 
@@ -151,6 +152,9 @@ def dispatch_door(engine, element, dice):
     if x <= 1 or x >= engine.maparray.w:
         return (False,)
     elif y <= 1 or y >= engine.maparray.h:
+        return (False,)
+    
+    if engine.maparray[x, y][0] != "void":
         return (False,)
 
     direction = element[4]

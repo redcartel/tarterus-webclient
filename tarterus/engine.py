@@ -204,9 +204,9 @@ class Engine():
         self.add(["hall", "start", 36, 38, "w", 2, ("hall", 1)])
 
     def init_big_halls(self):
-        self.add(["hall", "start", 35, 35, "n", 8, ("hall", 1)])
-        self.add(["hall", "start", 34, 36, "w", 8, ("hall", 1)])
-        self.add(["hall", "start", 35, 44, "s", 8, ("hall", 1)])
+        self.add(["hall", "start", 35, 35, "n", 2, ("hall", 1)])
+        self.add(["hall", "start", 34, 36, "w", 4, ("hall", 1)])
+        self.add(["hall", "start", 35, 44, "s", 6, ("hall", 1)])
         self.add(["hall", "start", 43, 36, "e", 8, ("hall", 1)])
 
     def __str__(self):
