@@ -1,10 +1,11 @@
 from tarterus.maparray import MapArray
-from tarterus.graphpaper import back, turn_positive  # , vector, right, left,
+from tarterus.graphpaper import back, turn_positive, right, left
 from tarterus.graphpaper import advance  # turn_across, empty, middle_value
 from tarterus.graphpaper import is_positive, gt_or_eq
 # from random import randint
 
 DICE_ARRAY = [15, 10, 10]
+EXIT_DICE_ARRAY = [10, 20, 20]
 
 DONT_OVERLAP_SQUARES = ['room', 'hall', 'stup', 'sdwn']
 
@@ -148,6 +149,8 @@ def room_table_1_2(engine, origin, x, y, direction, width, rsquare, dice):
     x0, y0 = find_loc(engine.maparray, x, y, 6, 6, direction, width, dice)
     if x0 is not False:
         draw_room(engine, x0, y0, 6, 6, rsquare)
+        engine.add(["exit", {"x": x0, "y": y0, "w": 6, "h": 6, "num": -1,
+                             "big": False, "direction": direction}])
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
         engine.log("\tpassed")
@@ -162,6 +165,8 @@ def room_table_3_4(engine, origin, x, y, direction, width, rsquare, dice):
     x0, y0 = find_loc(engine.maparray, x, y, 8, 8, direction, width, dice)
     if x0 is not False:
         draw_room(engine, x0, y0, 8, 8, rsquare)
+        engine.add(["exit", {"x": x0, "y": y0, "w": 8, "h": 8, "num": -1,
+                             "big": False, "direction": direction}])
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
         return (True,)
@@ -175,6 +180,8 @@ def room_table_5_6(engine, origin, x, y, direction, width, rsquare, dice):
     x0, y0 = find_loc(engine.maparray, x, y, 10, 10, direction, width, dice)
     if x0 is not False:
         draw_room(engine, x0, y0, 10, 10, rsquare)
+        engine.add(["exit", {"x": x0, "y": y0, "w": 10, "h": 10, "num": -1,
+                             "big": False, "direction": direction}])
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
         return (True,)
@@ -192,6 +199,8 @@ def room_table_7_9(engine, origin, x, y, direction, width, rsquare, dice):
     x0, y0 = find_loc(engine.maparray, x, y, a, b, direction, width, dice)
     if x0 is not False:
         draw_room(engine, x0, y0, a, b, rsquare)
+        engine.add(["exit", {"x": x0, "y": y0, "w": a, "h": b, "num": -1,
+                             "big": False, "direction": direction}])
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
         return (True,)
@@ -200,6 +209,8 @@ def room_table_7_9(engine, origin, x, y, direction, width, rsquare, dice):
     x0, y0 = find_loc(engine.maparray, x, y, a, b, direction, width, dice)
     if x0 is not False:
         draw_room(engine, x0, y0, a, b, rsquare)
+        engine.add(["exit", {"x": x0, "y": y0, "w": a, "h": b, "num": -1,
+                             "big": False, "direction": direction}])
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
         return (True,)
@@ -219,6 +230,8 @@ def room_table_10_12(engine, origin, x, y, direction, width, rsquare, dice):
     if x0 is not False:
         engine.log("first try")
         draw_room(engine, x0, y0, a, b, rsquare)
+        engine.add(["exit", {"x": x0, "y": y0, "w": a, "h": b, "num": -1,
+                             "big": False, "direction": direction}])
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
         return (True,)
@@ -229,6 +242,8 @@ def room_table_10_12(engine, origin, x, y, direction, width, rsquare, dice):
     if x0 is not False:
         engine.log("second try")
         draw_room(engine, x0, y0, a, b, rsquare)
+        engine.add(["exit", {"x": x0, "y": y0, "w": a, "h": b, "num": -1,
+                             "big": False, "direction": direction}])
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
         return (True,)
@@ -248,6 +263,8 @@ def room_table_13_14(engine, origin, x, y, direction, width, rsquare, dice):
     if x0 is not False:
         engine.log("first try")
         draw_room(engine, x0, y0, a, b, rsquare)
+        engine.add(["exit", {"x": x0, "y": y0, "w": a, "h": b, "num": -1,
+                             "big": True, "direction": direction}])
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
         return (True,)
@@ -258,6 +275,8 @@ def room_table_13_14(engine, origin, x, y, direction, width, rsquare, dice):
     if x0 is not False:
         engine.log("second try")
         draw_room(engine, x0, y0, a, b, rsquare)
+        engine.add(["exit", {"x": x0, "y": y0, "w": a, "h": b, "num": -1,
+                             "big": True, "direction": direction}])
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
         return (True,)
@@ -275,6 +294,8 @@ def room_table_15(engine, origin, x, y, direction, width, rsquare, dice):
     x0, y0 = find_loc(engine.maparray, x, y, a, b, direction, width, dice)
     if x0 is not False:
         draw_room(engine, x0, y0, a, b, rsquare)
+        engine.add(["exit", {"x": x0, "y": y0, "w": a, "h": b, "num": -1,
+                             "big": True, "direction": direction}])
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
         return (True,)
@@ -283,6 +304,8 @@ def room_table_15(engine, origin, x, y, direction, width, rsquare, dice):
     x0, y0 = find_loc(engine.maparray, x, y, a, b, direction, width, dice)
     if x0 is not False:
         draw_room(engine, x0, y0, a, b, rsquare)
+        engine.add(["exit", {"x": x0, "y": y0, "w": a, "h": b, "num": -1,
+                             "big": True, "direction": direction}])
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
         return (True,)
@@ -348,3 +371,140 @@ def dispatch_room(engine, element, dice):
         # 50x80
         return room_table_15(engine, origin, x, y,
                              direction, width, rsquare, dice)
+
+
+def valid_exit(engine, x, y, direction):
+    if direction in ["e", "w"] and engine.maparray[x, y][0] != 'vwal':
+        return False
+
+    elif direction in ["n", "s"] and engine.maparray[x, y][0] != 'hwal':
+        return False
+
+    x0, y0 = advance(x, y, direction, 1)
+    sq = engine.maparray[x0, y0][0]
+    if sq not in ['void', 'hall', 'room', 'vwal']:
+        return False
+
+    x1, y1 = advance(x, y, right(direction), 1)
+    x2, y2 = advance(x, y, left(direction), 1)
+    sq1 = engine.maparray[x1, y1][0]
+    sq2 = engine.maparray[x2, y2][0]
+    if sq1 in ["door", "open"] or sq2 in ["door", "open"]:
+        return False
+
+    return True
+
+
+def find_single_exit_square(engine, x, y, w, h, direction, dice):
+    if direction in ["e", "w"]:
+        dimension = w
+        o_dimension = h
+    else:
+        dimension = h
+        o_dimension = w
+
+    x0, y0 = x, y
+    if is_positive(direction):
+        x0, y0 = advance(x0, y0, direction, dimension - 1)
+
+    x0, y0 = advance(x0, y0, turn_positive(direction), 1)
+    engine.log("::find_single_exit_square\n\tchecking {}, {}, {} for {}".
+               format(x0, y0, direction, o_dimension))
+
+    _range = (0, o_dimension, 1)
+    if dice[1] % 2 == 1:
+        _range = (o_dimension - 1, -1, -1)
+
+    offset = dice[0]
+    n = 0
+    for n in _range:
+        place = (n + offset) % o_dimension
+        x1, y1 = advance(x0, y0, turn_positive(direction), place)
+        if valid_exit(engine, x1, y1, direction):
+            return x1, y1
+
+    return False, False
+
+
+def num_exit_table(die, big):
+    if big is True:
+        if die <= 3:
+            return 0
+        elif die <= 8:
+            return 1
+        elif die <= 13:
+            return 2
+        elif die <= 17:
+            return 3
+        elif die <= 18:
+            return 4
+        elif die <= 19:
+            return 5
+        elif die <= 20:
+            return 6
+    else:
+        if die <= 5:
+            return 0
+        if die <= 11:
+            return 1
+        if die <= 15:
+            return 2
+        if die <= 18:
+            return 3
+        if die <= 20:
+            return 4
+
+
+def exit_wall_table(die, direction):
+    if die <= 7:
+        return direction
+    elif die <= 12:
+        return left(direction)
+    elif die <= 17:
+        return right(direction)
+    elif die <= 20:
+        return back(direction)
+
+
+def exit_door(engine, x, y, w, h, direction, num, big, dice):
+    engine.log(":: exit_door")
+    if num == -1:
+        num = num_exit_table(dice[0], big)
+        engine.log("\tnum rolled = {}".format(num))
+
+    e_dir = exit_wall_table(dice[1], direction)
+
+    x0, y0 = find_single_exit_square(engine, x, y, w, h, e_dir, dice)
+    engine.log("\tfind_single_exit_square on {}: {}".format(e_dir, (x0, y0)))
+    if x0 is not False:
+        engine.add(["door", "exit", x0, y0, e_dir, 1, ("door", -1)])
+
+    if num > 1:
+        engine.add(["exit", {
+            "x": x,
+            "y": y,
+            "w": w,
+            "h": h,
+            "num": num - 1,
+            "big": big,
+            "direction": direction
+            }])
+
+    return (True,)
+
+
+def dispatch_exit(engine, element, dice):
+    x = element[1]["x"]
+    y = element[1]["y"]
+    w = element[1]["w"]
+    h = element[1]["h"]
+    num = element[1]["num"]
+    big = element[1]["big"]
+    direction = element[1]["direction"]
+    die = dice[0]
+    dice = dice[1:]
+    if num != -1 and num <= 0:
+        return (True,)
+
+    if die <= 10:
+        return exit_door(engine, x, y, w, h, direction, num, big, dice)

@@ -153,8 +153,8 @@ def dispatch_door(engine, element, dice):
         return (False,)
     elif y <= 1 or y >= engine.maparray.h:
         return (False,)
-    
-    if engine.maparray[x, y][0] != "void":
+
+    if engine.maparray[x, y][0] not in ["void", "vwal", "hwal"]:
         return (False,)
 
     direction = element[4]

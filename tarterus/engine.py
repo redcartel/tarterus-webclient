@@ -4,6 +4,8 @@ from tarterus.passage import DICE_ARRAY as passage_dice
 from random import randint
 from tarterus.room import dispatch_room
 from tarterus.room import DICE_ARRAY as room_dice
+from tarterus.room import dispatch_exit
+from tarterus.room import EXIT_DICE_ARRAY as exit_dice
 from tarterus.door import dispatch_door
 from tarterus.door import DICE_ARRAY as door_dice
 import json
@@ -177,12 +179,12 @@ class Engine():
 
         if element[0] == 'door':
             dice = self.roll(door_dice, command.get("dice", []))
-            self.log("::dispatch_door\n\t{}".format(element))
+            self.log("::dispatch_door\n\t{} {}".format(element, dice))
             return dispatch_door(self, element, dice)
 
         if element[0] == 'hall':
             dice = self.roll(passage_dice, command.get("dice", []))
-            self.log("::dispatch_passage\n\t{}".format(element))
+            self.log("::dispatch_passage\n\t{} {}".format(element, dice))
             return dispatch_passage(self, element, dice)
 
         if element[0] == 'populate':
@@ -190,11 +192,13 @@ class Engine():
 
         if element[0] == 'room':
             dice = self.roll(room_dice, command.get("dice", []))
-            self.log("::dispatch_room\n\t{}".format(element))
+            self.log("::dispatch_room\n\t{} {}".format(element, dice))
             return dispatch_room(self, element, dice)
 
-        if element[0] == 'stairs':
-            pass
+        if element[0] == 'exit':
+            dice = self.roll(exit_dice, command.get("dice", []))
+            self.log("::dispatch_exit\n\t{} {}".format(element, dice))
+            return dispatch_exit(self, element, dice)
 
     # remove this once there are real start rooms
     def init_halls(self):
