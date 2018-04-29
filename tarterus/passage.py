@@ -1,67 +1,14 @@
 # from tarterus.maparray import MapArray
-from tarterus.graphpaper import vector, right, left, back, turn_positive
+from tarterus.graphpaper import right, left, back, turn_positive
 from tarterus.graphpaper import is_positive, turn_across
 from tarterus.graphpaper import advance, middle_value  # , empty
 # from random import randint
 
 DICE_ARRAY = [19, 12, 20]
 
-# TODO: CLEAN THIS UP, IT'S A MESS AND IS THE OPPOSITE OF LITERATE PROGRAMMING
 
-
-# TODO: Rewrite coords and then use it to clean up table entries
-# hall origin into box dimensions for maparray ranges
-# width always measures in a positive direction
-# def coords(x, y, direction, width, length):
-#     if direction == "n":
-#         return_val = {
-#                 "x1": x,
-#                 "x2": x + width,
-#                 "w":  width,
-#                 "y1": y - length + 1,
-#                 "y2": y + 1,
-#                 "h":  length,
-#                 "nx": x,
-#                 "ny": y - length,
-#                 }
-#     elif direction == "e":
-#         return_val = {
-#                 "x1": x,
-#                 "x2": x + length,
-#                 "w":  length,
-#                 "y1": y,
-#                 "y2": y + width,
-#                 "h":  width,
-#                 "nx": x + length,
-#                 "ny": y
-#                 }
-#     elif direction == "s":
-#         return_val = {
-#                 "x1": x,
-#                 "x2": x + width,
-#                 "w":  width,
-#                 "y1": y,
-#                 "y2": y + length,
-#                 "h":  length,
-#                 "nx": x,
-#                 "ny": y + length
-#                 }
-#     elif direction == "w":
-#         return_val = {
-#                 "x1": x - length + 1,
-#                 "x2": x + 1,
-#                 "w":  length,
-#                 "y1": y,
-#                 "y2": y + width,
-#                 "h":  width,
-#                 "nx": x - length,
-#                 "ny": y
-#                 }
-#     return return_val
-# current behavior is to draw a passage until it hits non-void tiles
-# TODO: COLUMN MODES
-
-
+# given a square, width, and direction, find an empty orthogonal row of squares
+# of the given width that includes the square
 def find_pass_loc(engine, x, y, w, direction, dice, checked=None):
     x0, y0 = x, y
     if w == 1:
@@ -90,6 +37,7 @@ def find_pass_loc(engine, x, y, w, direction, dice, checked=None):
     return False, False
 
 
+# given a door origin, place a passage of a given width
 def place_door_pass(engine, x, y, direction, w, dice):
     w0 = w
     x0, y0 = advance(x, y, direction, 1)
@@ -115,9 +63,11 @@ def draw_passage_section(engine, x, y, direction, width, length, psquare):
         for x0, y0 in origins:
             x1, y1 = advance(x0, y0, direction, i)
             if x1 <= 0 or x1 + 1 >= engine.maparray.w:
-                origins.remove((x0, y0))
+                new_origins.remove((x0, y0))
+                blocks.append((x1, y1))
             elif y1 <= 0 or y1 + 1 >= engine.maparray.h:
-                origins.remove((x0, y0))
+                new_origins.remove((x0, y0))
+                blocks.append((x1, y1))
             elif engine.maparray[x1, y1][0] != 'void':
                 engine.log(":: draw_passage_section block")
                 engine.log("\tblock at {}, remove {}".
@@ -133,49 +83,9 @@ def draw_passage_section(engine, x, y, direction, width, length, psquare):
             step_out = True
     if step_out is False:
         x2, y2 = advance(x, y, direction, length)
-        return { 
-                "result": "success",
-                "next_square": (x2, y2)
-                }
+        return (True, {"next_square": (x2, y2)})
     else:
-        return {
-                "result": "blocked",
-                "blocks": blocks
-                }
-
-# def draw_passage_section(engine, x, y, direction, width, length, psquare):
-#     origins = [(x, y)]
-#     maparray = engine.maparray
-#     # d_vec = vector(direction)
-#     # o_vec = vector(turn_positive(direction))
-#     for i in range(1, width):
-#         origins.append((x + i * o_vec[0], y + i * o_vec[1]))
-#     blocks = []
-# # after the first block is hit, the rest of the
-# # passage advances one more step then the process
-# # terminates
-#     step_out = False
-#     for i in range(length):
-#         for s in origins:
-#             target = (s[0] + i * d_vec[0], s[1] + i * d_vec[1])
-#             if maparray[target[0], target[1]] != ('void', 0):
-#                 origins.remove(s)
-#                 blocks.append(s)
-#             elif target[0] <= 0 or target[0] + 1 >= maparray.w or \
-#                     target[1] <= 0 or target[1] + 1 >= maparray.h:
-#                 return {"result": "edge", "blocks": []}
-#             else:
-#                 maparray[target[0], target[1]] = psquare
-#         if step_out is True:
-#             break
-#         if len(origins) < width:
-#             step_out = True
-#     if len(blocks) > 0:
-#         return {"result": "blocked", "blocks": blocks}
-#     else:
-#         return {"result": "success",
-#                 "next_square": (x + length * d_vec[0], y + length * d_vec[1])}
-# 
+        return (False, {"blocks": blocks})
 
 # NOTE: Drawing passages only if the way is completely clear might be a toggle
 #   option to generate sparser maps. For a later version
@@ -213,186 +123,197 @@ def passage_width_table(die_roll=-1, from_chamber=False):
         return {"width": 8}
 
 
+# Table from pg. 290
+# Current behavior is to only add branches if the main corridor of the passage
+# draws without being blocked.
 # straight 30ft, no doors or side passages & continue
 def passage_table_1_2(engine, origin, x, y, direction, width, psquare, dice):
     catch = draw_passage_section(engine, x, y, direction, width, 6, psquare)
-    if catch['result'] == 'success':
-        nx = catch['next_square'][0]
-        ny = catch['next_square'][1]
+    if catch[0] is True:
+        nx, ny = catch[1]['next_square']
         engine.add(['hall', 'passage', nx, ny, direction, width, psquare])
-        return True
+        return (True, (x, y, width, []))
     else:
-        return True
+        return (True, (x, y, width, catch[1]['blocks']))
 
 
 # straight 20 ft, door to the right, 10 more feet & continue
 def passage_table_3(engine, origin, x, y, direction, width, psquare, dice):
-    catch = draw_passage_section(engine, x, y, direction, width, 4, psquare)
-    if catch['result'] != 'success':
-        return True # catch['blocks']
-    x, y = catch['next_square']
-    dx, dy = x, y
-    catch = draw_passage_section(engine, x, y, direction, width, 2, psquare)
-    if catch['result'] != 'success':
-        return True # catch['blocks']
-    x, y = catch['next_square']
+    catch1 = draw_passage_section(engine, x, y, direction, width, 4, psquare)
+    if catch1[0] is False:
+        return (True, (x, y, width, catch1[1]['blocks']))
+
+    x0, y0 = catch1[1]['next_square']
+    dx, dy = x0, y0
+    catch = draw_passage_section(engine, x0, y0, direction, width, 2, psquare)
+    if catch[0] is False:
+        return (True, (x, y, width, []))
+
+    x0, y0 = catch[1]['next_square']
     dx, dy = turn_across(dx, dy, direction, right(direction), width)
     engine.add(['door', 'passage', dx, dy, right(direction), 1, ('door', -1)])
-    engine.add(['hall', 'passage', x, y, direction, width, psquare])
-    return True
+    engine.add(['hall', 'passage', x0, y0, direction, width, psquare])
+    return (True, (x, y, width, []))
 
 
 # straight 20 ft, door to the left, 10 more feet & continue
 def passage_table_4(engine, origin, x, y, direction, width, psquare, dice):
-    catch = draw_passage_section(engine, x, y, direction, width, 4, psquare)
-    if catch['result'] != 'success':
-        return True # catch['blocks']
-    x, y = catch['next_square']
-    dx, dy = x, y
+    catch1 = draw_passage_section(engine, x, y, direction, width, 4, psquare)
+    if catch1[0] is False:
+        return (True, (x, y, width, catch1[1]['blocks']))
+
+    x0, y0 = catch1[1]['next_square']
+    dx, dy = x0, y0
     catch = draw_passage_section(engine, dx, dy, direction, width, 2, psquare)
-    if catch['result'] != 'success':
-        return True # catch['blocks']
-    x, y = catch['next_square']
+    if catch[0] is False:
+        return (True, (x, y, width, []))
+
+    x0, y0 = catch[1]['next_square']
     dx, dy = turn_across(dx, dy, direction, left(direction), width)
     engine.add(['door', 'passage', dx, dy, left(direction), 1, ('door', -1)])
-    engine.add(['hall', 'passage', x, y, direction, width, psquare])
-    return True
+    engine.add(['hall', 'passage', x0, y0, direction, width, psquare])
+    return (True, (x, y, width, []))
 
 
 # straight 20 ft, ends in door
 def passage_table_5(engine, origin, x, y, direction, width, psquare, dice):
     catch = draw_passage_section(engine, x, y, direction, width, 4, psquare)
-    if catch['result'] != 'success':
-        return True # catch['blocks']
-    dx, dy = catch['next_square']
+    if catch[0] is False:
+        return (True, (x, y, width, catch[1]['blocks']))
+
+    dx, dy = catch[1]['next_square']
     dx, dy = advance(dx, dy, turn_positive(direction),
                      middle_value(width, dice[0])-1)
     engine.add(['door', 'passage', dx, dy, direction, 1, ('door', -1)])
-    return True
+    return (True, (x, y, width, []))
 
 
 # straight 20 ft, side passage right, 10 ft
 # TODO: d12 for die 2 in passage generation dispatch?
 def passage_table_6_7(engine, origin, x, y, direction, width, psquare, dice):
-    catch = draw_passage_section(engine, x, y, direction, width, 4, psquare)
-    if catch['result'] != 'success':
-        return True # catch['blocks']
-    x, y = catch['next_square']
-    px, py = turn_across(x, y, direction, right(direction), width)
+    catch1 = draw_passage_section(engine, x, y, direction, width, 4, psquare)
+    if catch1[0] is False:
+        return (True, (x, y, width, catch1[1]['blocks']))
+
+    x0, y0 = catch1[1]['next_square']
+    px, py = turn_across(x0, y0, direction, right(direction), width)
+# TODO: add branching passage to immediate list, get width from dispatch
     nwidth = passage_width_table(dice[0])['width']
-    catch = draw_passage_section(engine, x, y, direction,
+    catch = draw_passage_section(engine, x0, y0, direction,
                                  width, 2 + nwidth, psquare)
-    if catch['result'] != 'success':
-        return True # catch['blocks']
-    nsquare = (psquare[0], new_passage_descriptor())
+    if catch[0] is False:
+        return (True, (x, y, width, []))
+
+    nsquare = (psquare[0], -1)
     engine.add(['hall', 'passage', px, py, right(direction), nwidth, nsquare])
-    x, y = catch['next_square']
-    engine.add(['hall', 'passage', x, y, direction, width, psquare])
-    return True
+    x0, y0 = catch[1]['next_square']
+    engine.add(['hall', 'passage', x0, y0, direction, width, psquare])
+    return (True, (x, y, width, []))
 
 
 # 20 feet forward, branch to left, 10 feet forward continue
 def passage_table_8_9(engine, origin, x, y, direction, width, psquare, dice):
-    catch = draw_passage_section(engine, x, y, direction, width, 4, psquare)
-    if catch['result'] != 'success':
-        return True # catch['blocks']
-    x, y = catch['next_square']
-    # px, py = back_to_left(x, y, direction, width)
-    px, py = turn_across(x, y, direction, left(direction), width)
+    catch1 = draw_passage_section(engine, x, y, direction, width, 4, psquare)
+    if catch1[0] is False:
+        return (True, (x, y, width, catch1[1]['blocks']))
+
+    x0, y0 = catch1[1]['next_square']
+    px, py = turn_across(x0, y0, direction, left(direction), width)
+# TODO: add branching passag to immediate list, get width from dispatch
     nwidth = passage_width_table(dice[0])['width']
-    catch = draw_passage_section(engine, x, y, direction,
+    catch = draw_passage_section(engine, x0, y0, direction,
                                  width, 2 + nwidth, psquare)
-    if catch['result'] != 'success':
-        return True # catch['blocks']
-    x, y = catch['next_square']
-    nsquare = (psquare[0], new_passage_descriptor())
+    if catch[0] is False:
+        return (True, (x, y, width, []))
+
+    x0, y0 = catch[1]['next_square']
+    nsquare = (psquare[0], -1)
     engine.add(['hall', 'passage', px, py, left(direction), nwidth, nsquare])
-    engine.add(['hall', 'passage', x, y, direction, width, psquare])
-    return True
+    engine.add(['hall', 'passage', x0, y0, direction, width, psquare])
+    return (True, (x, y, width, []))
 
 
 # Straight 20ft, dead end, 10% chance of secret door
 # 3rd die is d10
 def passage_table_10(engine, origin, x, y, direction, width, psquare, dice):
     catch = draw_passage_section(engine, x, y, direction, width, 4, psquare)
-    if catch['result'] != 'success':
-        return True # catch['blocks']
-    x, y = catch['next_square']
+    if catch[0] is False:
+        return (True, (x, y, width, catch[1]['blocks']))
+
     if dice[1] >= 18:
-        dx, dy = catch['next_square']
+        dx, dy = catch[1]['next_square']
         dx, dy = advance(dx, dy, turn_positive(direction),
                          middle_value(width, dice[0])-1)
         engine.add(['door', 'passage_secret', dx, dy,
                    direction, 1, ('door', -1)])
-    return True
+    return (True, (x, y, width, []))
 
 
 # Straight 20ft, left turn, 10 ft
 def passage_table_11_12(engine, origin, x, y, direction, width, psquare, dice):
-    catch = draw_passage_section(engine, x, y, direction, width, 4, psquare)
-    if catch['result'] != 'success':
-        return True # catch['blocks']
-    px, py = catch['next_square']
+    catch1 = draw_passage_section(engine, x, y, direction, width, 4, psquare)
+    if catch1[0] is False:
+        return (True, (x, y, width, catch1[1]['blocks']))
+
+    px, py = catch1[1]['next_square']
     catch = draw_passage_section(engine, px, py, direction,
                                  width, width, psquare)
-    if catch['result'] != 'success':
-        return True # catch['blocks']
+
+    if catch[0] is False:
+        return (True, (x, y, width, []))
+
+    # funky math to figure out turn coordinates
     if not is_positive(direction):
-        px, py = catch['next_square']
+        px, py = catch[1]['next_square']
         px, py = advance(px, py, back(direction), 1)
     px, py = turn_across(px, py, direction, left(direction), width)
     catch = draw_passage_section(engine, px, py, left(direction),
                                  width, 2, psquare)
-    if catch['result'] != 'success':
-        return True # catch['blocks']
-    px, py = catch['next_square']
+    if catch[0] is False:
+        return (True, (x, y, width, []))
+
+    px, py = catch[1]['next_square']
     engine.add(['hall', 'passage', px, py, left(direction), width, psquare])
-    return True
+    return (True, (x, y, width, []))
 
 
+# Straight 20ft, right turn, 10 ft
 def passage_table_13_14(engine, origin, x, y, direction, width, psquare, dice):
-    catch = draw_passage_section(engine, x, y, direction, width, 4, psquare)
-    if catch['result'] != 'success':
-        return True # catch['blocks']
-    px, py = catch['next_square']
+    catch1 = draw_passage_section(engine, x, y, direction, width, 4, psquare)
+    if catch1[0] is False:
+        return (True, (x, y, width, catch1[1]['blocks']))
+
+    px, py = catch1[1]['next_square']
     catch = draw_passage_section(engine, px, py, direction,
                                  width, width, psquare)
-    if catch['result'] != 'success':
-        return True # catch['blocks']
+    if catch[0] is False:
+        return (True, (x, y, width, []))
+
     if not is_positive(direction):
-        px, py = catch['next_square']
+        px, py = catch[1]['next_square']
         px, py = advance(px, py, back(direction), 1)
     px, py = turn_across(px, py, direction, right(direction), width)
     catch = draw_passage_section(engine, px, py, right(direction),
                                  width, 2, psquare)
-    if catch['result'] != 'success':
-        return True # catch['blocks']
-    px, py = catch['next_square']
+    if catch[0] is False:
+        return (True, (x, y, width, []))
+
+    px, py = catch[1]['next_square']
     engine.add(['hall', 'passage', px, py, right(direction),
                 width, psquare])
-    return True
+    return (True, (x, y, width, []))
 
 
 def passage_table_15_19(engine, origin, x, y, direction, width, psquare, dice):
-    # if origin == "door":
-    #     x0, y0 = advance(x, y, back(direction), 1)
-    #     x1, y1 = x0, y0
-    #     does this always
-    #     for i in range(width):
-    #         x1, y1 = advance(x0, y0, turn_positive(direction), i)
-    #         if engine.maparray[x1][y1][0] == 'door':
-    #             break
-    #     engine.add(['room', origin, x1, y1, direction, 1, ("room", -1)])
-    # else:
-    #     engine.add(['room', origin, x, y, direction,
-    #                 width, ("room", psquare[1])])
     engine.immediate_add(['room', origin, x, y, direction,
                          width, ("room", -1)])
-    return engine.dispatch_immediate()
+    ret = engine.dispatch_immediate()
+    return ret
 
 
-def passage_table_20(engine, origin, x, y, direction, width, psquare, dice):
-    engine.add(['stairs', 'passage', x, y, direction, width, psquare])
+# TODO: implement & enable stairs
+# def passage_table_20(engine, origin, x, y, direction, width, psquare, dice):
+#    engine.add(['stairs', 'passage', x, y, direction, width, psquare])
 
 
 # TODO: width should be 12 or 20, reflecting which die to use on the table
@@ -409,13 +330,15 @@ def dispatch_passage(engine, element, dice):
         pass
     die_roll = dice[0]
     dice = dice[1:]
-    
+
     # if the origin is a door, and the die roll says draw a passage, then
     # check for placement and move to the position
     if origin == "door" and die_roll <= 14:
         x, y, width = place_door_pass(engine, x, y, direction, width, dice)
+        engine.log(":: placing passage from door\n\t{}, {}, {}".
+                   format(x, y, width))
         if x is False:
-            return False
+            return (False,)
 
     # a hack, width is a tuple of (w x l)
     if element[1] == "draw":
@@ -449,11 +372,11 @@ def dispatch_passage(engine, element, dice):
         return passage_table_13_14(engine, origin, x, y,
                                    direction, width, psquare, dice)
     elif die_roll <= 19:
-        return passage_table_15_19(engine, origin, x, y, 
+        return passage_table_15_19(engine, origin, x, y,
                                    direction, width, psquare, dice)
-    else:
-        passage_table_20(engine, origin, x, y, 
-                         direction, width, psquare, dice)
+    # else:
+    #    passage_table_20(engine, origin, x, y,
+    #                     direction, width, psquare, dice)
 
 
 # allocate new identifier for descriptor table, add description

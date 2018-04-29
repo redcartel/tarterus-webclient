@@ -20,6 +20,9 @@ import json
 #   -pop_mode: Method used to pick next dungeon feature to be added. Default is
 #       "random" to pick an element from the PendingList at random, other
 #       options are "stack" and "queue" to always take newest or oldest item.
+#       "script" pop in the order recorded in script_file
+#   -script_file: json file with saved die rolls and queue pops. should exactly
+#       regenerate a level
 class Engine():
 
     def __init__(self, params):
@@ -27,12 +30,20 @@ class Engine():
         self.log_messages = []
         self.roll_log = []
         self.loaded_dice = []
+
         self.process_params()
 
         self.maparray = MapArray(("void", 0), (self.w, self.h))
         self.descriptions = [{}]
 
         self.engine = self.the_engine()
+
+    def add_new_description(self, content={}):
+        n = len(self.descriptions)
+        self.log2(":: add_new_description\n\tn={}, content={}".
+                  format(n, content))
+        self.descriptions.append(content)
+        return n
 
     def process_params(self):
         self.w = self.params['w']
@@ -47,10 +58,15 @@ class Engine():
             self.loaded_dice = script_data["roll"]
             self.pending.scripted_ipop = script_data["ipop"]
 
-        if self.params.get("log", False) is True:
+        if self.params.get("log", True) is True:
             self.log = self.yes_log
+            self.log2 = self.no_log
+        elif self.params.get("log", True) is 2:
+            self.log = self.yes_log
+            self.log2 = self.yes_log
         else:
             self.log = self.no_log
+            self.log2 = self.no_log
 
         self.dont_terminate = self.params.get("dont_terminate", False)
 # does not do anything yet
@@ -120,6 +136,9 @@ class Engine():
     # Create a list of die roll results from a vector of the numbers of sides
     # of each die. All random number generation in the map generation process
     # is handled by this method and in the random pop method of PendingList
+    # forced_rolls will force rolls
+    # if no forced rolls, check loaded_dice (set with a command or a script
+    # file)
     def roll(self, dice, forced_rolls=[]):
         ret = []
         for i, nsides in enumerate(dice):
@@ -132,11 +151,13 @@ class Engine():
                 except IndexError:
                     ret.append(randint(1, nsides))
         self.log("::Dice rolled\n\t{}".format(ret))
+        # log dice rolled, to be output to a script json
         for roll in ret:
             self.roll_log.append(roll)
         return ret
 
 # TODO: send die rolls from a command to the immediate list
+# Dispatch an element from the immediate_list, which is a stack.
     def dispatch_immediate(self, command={}):
         if len(self.immediate_list) > 0:
             element = self.immediate_list.pop()
@@ -144,10 +165,12 @@ class Engine():
         else:
             return False
 
+# Add an element to the immediate list
     def immediate_add(self, element):
         self.log(":: immediate_add\n\t{}".format(element))
         self.immediate_list.add(element)
 
+# dispatch an element
     def dispatch(self, element, command={}):
         if element[0] == 'describe':
             pass
@@ -165,31 +188,26 @@ class Engine():
         if element[0] == 'populate':
             pass
 
-# this logic should move but, if the room can't be drawn and the origin was a
-# door, erase the door
         if element[0] == 'room':
-            # origin = element[1]
-            # x = element[2]
-            # y = element[3]
-            # origin_square = self.maparray[x, y]
             dice = self.roll(room_dice, command.get("dice", []))
             self.log("::dispatch_room\n\t{}".format(element))
             return dispatch_room(self, element, dice)
-            # self.log("\tres={}, origin={}, origin_square={}".
-            #         format(res, origin, repr(origin_square)))
-            # if res is False and \
-            #         origin == "door" and origin_square[0] == "door":
-            #     self.maparray[x, y] = ('void', 0)
 
         if element[0] == 'stairs':
             pass
 
-    # remove this
+    # remove this once there are real start rooms
     def init_halls(self):
         self.add(["hall", "start", 37, 37, "n", 2, ("hall", 1)])
         self.add(["hall", "start", 39, 38, "e", 2, ("hall", 1)])
         self.add(["hall", "start", 37, 40, "s", 2, ("hall", 1)])
         self.add(["hall", "start", 36, 38, "w", 2, ("hall", 1)])
+
+    def init_big_halls(self):
+        self.add(["hall", "start", 35, 35, "n", 8, ("hall", 1)])
+        self.add(["hall", "start", 34, 36, "w", 8, ("hall", 1)])
+        self.add(["hall", "start", 35, 44, "s", 8, ("hall", 1)])
+        self.add(["hall", "start", 43, 36, "e", 8, ("hall", 1)])
 
     def __str__(self):
         if len(self.roll_log) > 2:
@@ -349,8 +367,9 @@ class PendingList:
     def insert(self, i, element):
         self.items.insert(i, element)
 
-    # pop the element at index i.
+    # pop the element at index i. all pop functions should call this
     def ipop(self, i):
+        # keep a list of pop order for scripting
         self.ipop_log.append(i)
         return self.items.pop(i)
 

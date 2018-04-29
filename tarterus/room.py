@@ -45,7 +45,15 @@ def room(w, h, rsquare):
 def draw_room(engine, x, y, w, h, rsquare):
     engine.log("draw_room {}, {}, {}, {}".format(x, y, w, h))
     # if rect_fits(maparray, x, y, w, h):
-    engine.maparray[x:x+w, y:y+h] = room(w, h, rsquare)
+    r = room(w, h, rsquare)
+    # preserve corner tiles for overlapping rooms
+    for x0 in range(x, x+w):
+        for y0 in range(y, y+h):
+            if r[x0-x, y0-y][0] == 'tcor':
+                engine.maparray[x0, y0] = r[x0-x, y0-y]
+            elif engine.maparray[x0, y0][0] not in ['tcor', 'bcor']:
+                engine.maparray[x0, y0] = r[x0-x, y0-y]
+    # engine.maparray[x:x+w, y:y+h] = room(w, h, rsquare)
     # return True
     # else:
     # return False
@@ -81,7 +89,8 @@ def draw_room_at_entrance(maparray, x, y, direction, w, h, offset):
 # width : the width of the entrance, 1 for a door, possibly multi for open
 # passage
 # TODO: more literate code, this is a head-scratcher for sure
-
+# TODO: rewirte this, it fails to check at end_offset and should check in a
+# random direction.
 def find_loc(maparray, x, y, w, h, direction, width, dice, checked=None):
     # size of dimension orthogonal to the direction & dimen. in direction
     o_length, d_length = w, h
@@ -122,9 +131,9 @@ def find_loc(maparray, x, y, w, h, direction, width, dice, checked=None):
 def place_entrance(engine, origin, x, y, direction, width, psquare, dice):
     engine.log(":: Place_entrance\n\t{}, {}, {}, width: {}".
                format(x, y, direction, width))
-    if origin == "door":
-        engine.maparray[x, y] = ('door', psquare[1])
-    elif origin == "passage":
+    # if origin == "door":
+    #     engine.maparray[x, y] = ('door', psquare[1])
+    if origin == "passage":
         if direction in ["e", "w"]:
             engine.maparray[x, y: y+width] = ('open', psquare[1])
         elif direction in ["n", "s"]:
@@ -142,10 +151,10 @@ def room_table_1_2(engine, origin, x, y, direction, width, rsquare, dice):
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
         engine.log("\tpassed")
-        return True
+        return (True,)
     else:
         engine.log("\tfailed")
-        return False
+        return (False,)
 
 
 # 30 x 30 room
@@ -155,7 +164,7 @@ def room_table_3_4(engine, origin, x, y, direction, width, rsquare, dice):
         draw_room(engine, x0, y0, 8, 8, rsquare)
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
-        return True
+        return (True,)
     else:
         return room_table_1_2(engine, origin, x, y,
                               direction, width, rsquare, dice)
@@ -168,7 +177,7 @@ def room_table_5_6(engine, origin, x, y, direction, width, rsquare, dice):
         draw_room(engine, x0, y0, 10, 10, rsquare)
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
-        return True
+        return (True,)
     else:
         return room_table_3_4(engine, origin, x, y,
                               direction, width, rsquare, dice)
@@ -185,7 +194,7 @@ def room_table_7_9(engine, origin, x, y, direction, width, rsquare, dice):
         draw_room(engine, x0, y0, a, b, rsquare)
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
-        return True
+        return (True,)
 
     a, b = b, a
     x0, y0 = find_loc(engine.maparray, x, y, a, b, direction, width, dice)
@@ -193,7 +202,7 @@ def room_table_7_9(engine, origin, x, y, direction, width, rsquare, dice):
         draw_room(engine, x0, y0, a, b, rsquare)
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
-        return True
+        return (True,)
 
     return room_table_1_2(engine, origin, x, y, direction,
                           width, rsquare, dice)
@@ -212,7 +221,7 @@ def room_table_10_12(engine, origin, x, y, direction, width, rsquare, dice):
         draw_room(engine, x0, y0, a, b, rsquare)
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
-        return True
+        return (True,)
 
     a, b = b, a
     x0, y0 = find_loc(engine.maparray, x, y, a, b, direction, width, dice)
@@ -222,7 +231,7 @@ def room_table_10_12(engine, origin, x, y, direction, width, rsquare, dice):
         draw_room(engine, x0, y0, a, b, rsquare)
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
-        return True
+        return (True,)
     engine.log("fail to 7_9")
     return room_table_7_9(engine, origin, x, y, direction,
                           width, rsquare, dice)
@@ -241,7 +250,7 @@ def room_table_13_14(engine, origin, x, y, direction, width, rsquare, dice):
         draw_room(engine, x0, y0, a, b, rsquare)
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
-        return True
+        return (True,)
 
     a, b = b, a
     x0, y0 = find_loc(engine.maparray, x, y, a, b, direction, width, dice)
@@ -251,7 +260,7 @@ def room_table_13_14(engine, origin, x, y, direction, width, rsquare, dice):
         draw_room(engine, x0, y0, a, b, rsquare)
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
-        return True
+        return (True,)
     engine.log("fail to 10_12")
     return room_table_10_12(engine, origin, x, y, direction,
                             width, rsquare, dice)
@@ -268,7 +277,7 @@ def room_table_15(engine, origin, x, y, direction, width, rsquare, dice):
         draw_room(engine, x0, y0, a, b, rsquare)
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
-        return True
+        return (True,)
 
     a, b = b, a
     x0, y0 = find_loc(engine.maparray, x, y, a, b, direction, width, dice)
@@ -276,7 +285,7 @@ def room_table_15(engine, origin, x, y, direction, width, rsquare, dice):
         draw_room(engine, x0, y0, a, b, rsquare)
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
-        return True
+        return (True,)
 
     return room_table_13_14(engine, origin, x, y, direction,
                             width, rsquare, dice)
