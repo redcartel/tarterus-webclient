@@ -1,13 +1,14 @@
 from tarterus.maparray import MapArray
 from tarterus.graphpaper import back, turn_positive, right, left
 from tarterus.graphpaper import advance  # turn_across, empty, middle_value
-from tarterus.graphpaper import is_positive, gt_or_eq
+from tarterus.graphpaper import is_positive, gt_or_eq, distance
+from tarterus.passage import passage_width_table
 # from random import randint
 
 DICE_ARRAY = [15, 10, 10]
-EXIT_DICE_ARRAY = [10, 20, 20]
+EXIT_DICE_ARRAY = [20, 20, 20]
 
-DONT_OVERLAP_SQUARES = ['room', 'hall', 'stup', 'sdwn']
+DONT_OVERLAP_SQUARES = ['room', 'hall', 'stup', 'sdwn', 'open']
 
 
 def no_overlap(squares, checked=None):
@@ -50,8 +51,14 @@ def draw_room(engine, x, y, w, h, rsquare):
     # preserve corner tiles for overlapping rooms
     for x0 in range(x, x+w):
         for y0 in range(y, y+h):
+            # always draw top corners from the new room
+            undersquare = engine.maparray[x0, y0]
             if r[x0-x, y0-y][0] == 'tcor':
                 engine.maparray[x0, y0] = r[x0-x, y0-y]
+            # bottom corners become top corners if overwriting vertical wall
+            elif r[x0-x, y0-y][0] == 'bcor' and undersquare[0] == 'vwal':
+                engine.maparray[x0, y0] = ('tcor', rsquare[1])
+            # otherwise don't draw over existing corners
             elif engine.maparray[x0, y0][0] not in ['tcor', 'bcor']:
                 engine.maparray[x0, y0] = r[x0-x, y0-y]
     # engine.maparray[x:x+w, y:y+h] = room(w, h, rsquare)
@@ -411,9 +418,9 @@ def find_single_exit_square(engine, x, y, w, h, direction, dice):
     engine.log("::find_single_exit_square\n\tchecking {}, {}, {} for {}".
                format(x0, y0, direction, o_dimension))
 
-    _range = (0, o_dimension, 1)
+    _range = (0, o_dimension-2, 1)
     if dice[1] % 2 == 1:
-        _range = (o_dimension - 1, -1, -1)
+        _range = (o_dimension-3, -1, -1)
 
     offset = dice[0]
     n = 0
@@ -424,6 +431,50 @@ def find_single_exit_square(engine, x, y, w, h, direction, dice):
             return x1, y1
 
     return False, False
+
+
+def find_exit_range(engine, x, y, w, h, direction, dice):
+    x0, y0 = find_single_exit_square(engine, x, y, w, h, direction, dice)
+    if x0 is False:
+        return False, False, False
+    x1, y1 = x0, y0
+    px, py, nx, ny = None, None, None, None
+    # find positive most square in range
+    while valid_exit(engine, x1, y1, direction):
+        px, py = x1, y1
+        x1, y1 = advance(x1, y1, turn_positive(direction), 1)
+
+    # find negative most square in range
+    x1, y1 = x0, y0
+    while valid_exit(engine, x1, y1, direction):
+        nx, ny = x1, y1
+        x1, y1 = advance(x1, y1, back(turn_positive(direction)), 1)
+
+    return (nx, ny, distance((nx, ny), (px, py)))
+
+
+def find_exit_passage(engine, x, y, w, h, direction, dice):
+    x0, y0, width = find_exit_range(engine, x, y, w, h, direction, dice)
+    if x0 is False:
+        return False, False, False
+    width0 = passage_width_table(dice[0])['width']
+    while width0 > width:
+        if width0 > 2:
+            width0 = width0 - 2
+        else:
+            width0 = width0 - 1
+
+    offset = dice[1]
+    if dice[0] % 2 == 0:
+        _range = range(0, width)
+    else:
+        _range = range(width-1, -1, -1)
+    for i in _range:
+        d = (i + offset) % width
+        if d + width0 <= width:
+            x1, y1 = advance(x0, y0, turn_positive(direction), d)
+            return x1, y1, width0
+    return False, False, False
 
 
 def num_exit_table(die, big):
@@ -464,6 +515,27 @@ def exit_wall_table(die, direction):
         return right(direction)
     elif die <= 20:
         return back(direction)
+
+
+def exit_table_11_20(engine, x, y, w, h, direction, num, big, dice):
+    engine.log(":: exit_passage")
+    if num == -1:
+        num = num_exit_table(dice[0], big)
+
+    e_dir = exit_wall_table(dice[1], direction)
+    x0, y0, width = find_exit_passage(engine, x, y, w, h, e_dir, dice)
+    if x0 is False:
+        return (False,)
+
+    x1, y1 = advance(x0, y0, e_dir, 1)
+    sq = engine.maparray[x, y]
+    engine.add(["hall", "exit", x1, y1, e_dir, width, ("hall", -1)])
+
+    for i in range(width):
+        x2, y2 = advance(x0, y0, turn_positive(e_dir), i)
+        engine.maparray[x2, y2] = ('open', sq[1])
+
+    return (True,)
 
 
 def exit_door(engine, x, y, w, h, direction, num, big, dice):
@@ -508,3 +580,5 @@ def dispatch_exit(engine, element, dice):
 
     if die <= 10:
         return exit_door(engine, x, y, w, h, direction, num, big, dice)
+    elif die <= 20:
+        return exit_table_11_20(engine, x, y, w, h, direction, num, big, dice)

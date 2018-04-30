@@ -1,7 +1,7 @@
 from tarterus.maparray import MapArray  # , MapSquare
 from random import randint
 import json
-
+from tarterus.engine import Engine
 
 LOG = ""
 
@@ -256,7 +256,8 @@ def label_to_n(label):
         'door': 7,
         'sdwn': 8,
         'stup': 9,
-        'eror': 10
+        'errr': 10,
+        'open': 11
     }
     try:
         return TILETABLE[label]
@@ -286,14 +287,15 @@ def fetch_map(w, h, typ="default"):
     maparray = None
     roomlist = None
     clear_log()
-    if typ == "default":
-        maparray, roomlist = gen_map(w, h)
+    if typ == "hall_test":
+        e = Engine({"w": w, "h": h, "pop_mode": "random"})
+        e.add(["start", {"origin": "m"}])
+        e.gen_map()
+        maparray = e.maparray
+        roomlist = [{}]
+#        maparray, roomlist = gen_map(w, h)
     if typ == "splash":
         maparray, roomlist = gen_splash(w, h)
-    if typ == "big_room":
-        maparray, roomlist = gen_splash(w, h)
-    if typ == "hall_test":
-        maparray, roomlist = gen_map(w, h)
     add_log("fetch_map")
     return json.dumps(maparray_to_json(maparray, roomlist, get_log()))
 

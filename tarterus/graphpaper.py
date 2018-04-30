@@ -96,3 +96,20 @@ def middle_value(n, roll):
         return n // 2 + 1
     else:
         return n // 2 + (roll % 2)
+
+
+def distance(s1, s2):
+    if s1[0] == s2[0]:
+        if s2[1] - s1[1] >= 0:
+            return s2[1] - s1[1]
+        else:
+            return None
+
+    elif s1[1] == s2[1]:
+        if s2[0] - s1[0] >= 0:
+            return s2[0] - s1[0]
+        else:
+            return None
+
+    else:
+        return None

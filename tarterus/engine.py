@@ -8,6 +8,8 @@ from tarterus.room import dispatch_exit
 from tarterus.room import EXIT_DICE_ARRAY as exit_dice
 from tarterus.door import dispatch_door
 from tarterus.door import DICE_ARRAY as door_dice
+from tarterus.start import DICE_ARRAY as start_dice
+from tarterus.start import dispatch_start
 import json
 # dispatch_room, dispatch_stairs, grow_room, starting_area
 
@@ -187,8 +189,10 @@ class Engine():
             self.log("::dispatch_passage\n\t{} {}".format(element, dice))
             return dispatch_passage(self, element, dice)
 
-        if element[0] == 'populate':
-            pass
+        if element[0] == 'start':
+            dice = self.roll(start_dice, command.get("dice", []))
+            self.log("::dispatch_start\n\t{} {}".format(element, dice))
+            return dispatch_start(self, element, dice)
 
         if element[0] == 'room':
             dice = self.roll(room_dice, command.get("dice", []))

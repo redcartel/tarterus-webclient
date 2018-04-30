@@ -1,7 +1,11 @@
 /*jshint esversion: 6*/
 //TODO: order functions in a sane way
+//
+
+
 (function() {
     "use strict";
+    var tile_offset = 432;
 	var globals = {
         loaded: false,
         canvas: null,
@@ -15,22 +19,22 @@
         drag_start_y: null,
         drag_start_xoffset: null,
         drag_start_yoffset: null,
-        tiles_src: "static/resources/Vanilla_tiles.png",
+        tiles_src: "static/resources/tilemap.png",
 	    tileImg: {
 		    'void' : [464, 320],
 		    'vwal' : [480, 320],
 		    'hwal' : [496, 320],
 		    'room' : [128, 336],
-		    'hall' : [144, 336],
+		    'hall' : [144, 336 + tile_offset],
 		    'tcor' : [512, 320],
 		    'bcor' : [560, 320],
 		    'door' : [64,  336],
 		    'sdwn' : [192, 336],
 		    'stup' : [176, 336],
-            'eror' : [0,0],
-            'ofmp' : [432, 336]
+            'errr' : [0,0],
+            'open' : [16, 336 + tile_offset]
 	    },
-        tileNum: ['void', 'vwal', 'hwal', 'room', 'hall', 'tcor', 'bcor', 'door', 'sdown', 'stup',  'eror', 'ofmp']
+        tileNum: ['void', 'vwal', 'hwal', 'room', 'hall', 'tcor', 'bcor', 'door', 'sdown', 'stup',  'errr', 'open']
 	};
 
     var dims = {

@@ -29,7 +29,13 @@ def find_pass_loc(engine, x, y, w, direction, dice, checked=None):
         success = True
         for i in range(w):
             x2, y2 = advance(x1, y1, turn_positive(direction), i)
-            if engine.maparray[x2, y2][0] != 'void':
+            if x2 <= 1 or x2 + 1 >= engine.maparray.w:
+                success = False
+                break
+            elif y2 <= 1 or y2 + 1 >= engine.maparray.h:
+                success = False
+                break
+            elif engine.maparray[x2, y2][0] != 'void':
                 success = False
                 break
         if success is True:
@@ -311,6 +317,106 @@ def passage_table_15_19(engine, origin, x, y, direction, width, psquare, dice):
     return ret
 
 
+def door_passage_table_1_2(engine, origin, x, y,
+                           direction, width, psquare, dice):
+    catch = draw_passage_section(engine, x, y, direction, width, 2, psquare)
+    if catch[0] is False:
+        return (True, (x, y, width, catch[1]['blocks']))
+    x0, y0 = catch[1]['next_square']
+
+    catch = draw_passage_section(engine, x0, y0,
+                                 direction, width, width, psquare)
+    if catch[0] is False:
+        return (True, (x, y, width, catch[1]['blocks']))
+
+    x1, y1 = catch[1]['next_square']
+    px, py = x0, y0
+    if not is_positive(direction):
+        px, py = x1, y1
+        px, py = advance(px, py, back(direction), 1)
+
+    rx, ry = turn_across(px, py, direction, right(direction), width)
+    lx, ly = turn_across(px, py, direction, left(direction), width)
+
+    rcatch = draw_passage_section(engine, rx, ry,
+                                  right(direction), width, 2, psquare)
+    if rcatch[0] is not False:
+        rx, ry = rcatch[1]['next_square']
+        engine.add(['hall', 'passage', rx, ry,
+                    right(direction), width, psquare])
+
+    lcatch = draw_passage_section(engine, lx, ly,
+                                  left(direction), width, 2, psquare)
+    if lcatch[0] is not False:
+        lx, ly = lcatch[1]['next_square']
+        engine.add(['hall', 'passage', lx, ly,
+                   left(direction), width, psquare])
+
+    return (True, (x, y, width, []))
+
+
+def door_passage_table_3_8(engine, origin, x, y,
+                           direction, width, psquare, dice):
+    catch = draw_passage_section(engine, x, y, direction, width, 4, psquare)
+    if catch[0] is False:
+        return (True, (x, y, width, catch[1]['blocks']))
+
+    x0, y0 = catch[1]['next_square']
+    engine.add(['hall', 'passage', x0, y0, direction, width, psquare])
+    return (True, (x, y, width, []))
+
+
+def chamber_exit_table_11_20(engine, origin, x, y,
+                             direction, width, psquare, dice):
+    catch = draw_passage_section(engine, x, y, direction, width, 4, psquare)
+    if catch[0] is False:
+        return (True, (x, y, width, catch[1]['blocks']))
+
+    x0, y0 = catch[1]['next_square']
+    engine.add(['hall', 'passage', x0, y0, direction, width, psquare])
+    return (True, (x, y, width, []))
+
+
+# My own addition to the algorithm. 50% chance that passages that terminate
+# into walls open a connection
+def connect(engine, result, dice):
+    if result[0] is False:
+        return (False,)
+
+    if dice[1] % 4 in [1, 3]:
+        return (True,)
+    print(result)
+    blocks = result[1][3]
+    if len(blocks) == 0:
+        return (True,)
+    walls = []
+    for sq in blocks:
+        x, y = sq
+        if engine.maparray[x, y][0] in ['hwal', 'vwal']:
+            walls.append(sq)
+
+    if len(walls) == 0:
+        return (True,)
+
+    # connect with door
+    if dice[1] % 4 == 2:
+        index = dice[0] % len(walls)
+        wall = walls[index]
+        x, y = wall
+        if engine.maparray[x, y][0] == 'hwal':
+            engine.add(['door', 'passage', *wall, 'e', 1, ('door', -1)])
+        elif engine.maparray[x, y][0] == 'vwal':
+            engine.add(['door', 'passage', *wall, 'n', 1, ('door', -1)])
+
+    if dice[1] % 4 == 0:
+        for wall in walls:
+            x, y = wall
+            sq = engine.maparray[x, y]
+            engine.maparray[x, y] = ('open', sq[1])
+
+    return (True,)
+
+
 # TODO: implement & enable stairs
 # def passage_table_20(engine, origin, x, y, direction, width, psquare, dice):
 #    engine.add(['stairs', 'passage', x, y, direction, width, psquare])
@@ -333,7 +439,7 @@ def dispatch_passage(engine, element, dice):
 
     # if the origin is a door, and the die roll says draw a passage, then
     # check for placement and move to the position
-    if origin == "door" and die_roll <= 14:
+    if origin in ["do12", "do38"] or (origin == "door" and die_roll <= 14):
         x, y, width = place_door_pass(engine, x, y, direction, width, dice)
         engine.log(":: placing passage from door\n\t{}, {}, {}".
                    format(x, y, width))
@@ -344,47 +450,48 @@ def dispatch_passage(engine, element, dice):
     if element[1] == "draw":
         draw_passage_section(engine, origin, x, y, direction, *width, psquare)
 
+    elif origin == "do12":
+        return connect(engine, door_passage_table_1_2(engine, origin, x, y,
+                       direction, width, psquare, dice), dice)
+
+    elif origin == "do38":
+        return connect(engine, door_passage_table_3_8(engine, origin, x, y,
+                       direction, width, psquare, dice), dice)
+
+    elif origin == "exit":
+        return connect(engine, chamber_exit_table_11_20(engine, origin, x, y,
+                       direction, width, psquare, dice), dice)
+
     elif die_roll <= 2:
-        return passage_table_1_2(engine, origin, x, y,
-                                 direction, width, psquare, dice)
+        return connect(engine, passage_table_1_2(engine, origin, x, y,
+                       direction, width, psquare, dice), dice)
     elif die_roll <= 3:
-        return passage_table_3(engine, origin, x, y,
-                               direction, width, psquare, dice)
+        return connect(engine, passage_table_3(engine, origin, x, y,
+                       direction, width, psquare, dice), dice)
     elif die_roll <= 4:
-        return passage_table_4(engine, origin, x, y,
-                               direction, width, psquare, dice)
+        return connect(engine, passage_table_4(engine, origin, x, y,
+                       direction, width, psquare, dice), dice)
     elif die_roll <= 5:
-        return passage_table_5(engine, origin, x, y,
-                               direction, width, psquare, dice)
+        return connect(engine, passage_table_5(engine, origin, x, y,
+                       direction, width, psquare, dice), dice)
     elif die_roll <= 7:
-        return passage_table_6_7(engine, origin, x, y,
-                                 direction, width, psquare, dice)
+        return connect(engine, passage_table_6_7(engine, origin, x, y,
+                       direction, width, psquare, dice), dice)
     elif die_roll <= 9:
-        return passage_table_8_9(engine, origin, x, y,
-                                 direction, width, psquare, dice)
+        return connect(engine, passage_table_8_9(engine, origin, x, y,
+                       direction, width, psquare, dice), dice)
     elif die_roll <= 10:
-        return passage_table_10(engine, origin, x, y,
-                                direction, width, psquare, dice)
+        return connect(engine, passage_table_10(engine, origin, x, y,
+                       direction, width, psquare, dice), dice)
     elif die_roll <= 12:
-        return passage_table_11_12(engine, origin, x, y,
-                                   direction, width, psquare, dice)
+        return connect(engine, passage_table_11_12(engine, origin, x, y,
+                       direction, width, psquare, dice), dice)
     elif die_roll <= 14:
-        return passage_table_13_14(engine, origin, x, y,
-                                   direction, width, psquare, dice)
+        return connect(engine, passage_table_13_14(engine, origin, x, y,
+                       direction, width, psquare, dice), dice)
     elif die_roll <= 19:
         return passage_table_15_19(engine, origin, x, y,
                                    direction, width, psquare, dice)
     # else:
     #    passage_table_20(engine, origin, x, y,
     #                     direction, width, psquare, dice)
-
-
-# allocate new identifier for descriptor table, add description
-# worlds of potential here
-def new_passage_descriptor():
-    return 1
-
-
-def dispatch_door(maparray, mapset, element, die_roll1=1, die_roll2=1):
-    if maparray[element[2], element[3]] == ('void', 0):
-        maparray[element[2], element[3]] = ('door', 1)
