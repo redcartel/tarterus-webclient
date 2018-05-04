@@ -161,6 +161,7 @@ def room_table_1_2(engine, origin, x, y, direction, width, rsquare, dice):
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
         engine.log("\tpassed")
+        engine.describe(rsquare[1], {"w": 20, "h": 20})
         return (True,)
     else:
         engine.log("\tfailed")
@@ -176,6 +177,7 @@ def room_table_3_4(engine, origin, x, y, direction, width, rsquare, dice):
                              "big": False, "direction": direction}])
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
+        engine.describe(rsquare[1], {"w": 30, "h": 30})
         return (True,)
     else:
         return room_table_1_2(engine, origin, x, y,
@@ -191,6 +193,7 @@ def room_table_5_6(engine, origin, x, y, direction, width, rsquare, dice):
                              "big": False, "direction": direction}])
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
+        engine.describe(rsquare[1], {"w": 40, "h": 40})
         return (True,)
     else:
         return room_table_3_4(engine, origin, x, y,
@@ -210,6 +213,7 @@ def room_table_7_9(engine, origin, x, y, direction, width, rsquare, dice):
                              "big": False, "direction": direction}])
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
+        engine.describe(rsquare[1], {"w": (a-2)*5, "h": (b-2)*5})
         return (True,)
 
     a, b = b, a
@@ -220,6 +224,8 @@ def room_table_7_9(engine, origin, x, y, direction, width, rsquare, dice):
                              "big": False, "direction": direction}])
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
+        engine.describe(rsquare[1], {"w": (a-2)*5, "h": (b-2)*5})
+
         return (True,)
 
     return room_table_1_2(engine, origin, x, y, direction,
@@ -241,6 +247,7 @@ def room_table_10_12(engine, origin, x, y, direction, width, rsquare, dice):
                              "big": False, "direction": direction}])
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
+        engine.describe(rsquare[1], {"w": (a-2)*5, "h": (b-2)*5})
         return (True,)
 
     a, b = b, a
@@ -253,6 +260,7 @@ def room_table_10_12(engine, origin, x, y, direction, width, rsquare, dice):
                              "big": False, "direction": direction}])
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
+        engine.describe(rsquare[1], {"w": (a-2)*5, "h": (b-2)*5})
         return (True,)
     engine.log("fail to 7_9")
     return room_table_7_9(engine, origin, x, y, direction,
@@ -274,6 +282,7 @@ def room_table_13_14(engine, origin, x, y, direction, width, rsquare, dice):
                              "big": True, "direction": direction}])
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
+        engine.describe(rsquare[1], {"w": (a-2)*5, "h": (b-2)*5})
         return (True,)
 
     a, b = b, a
@@ -286,6 +295,7 @@ def room_table_13_14(engine, origin, x, y, direction, width, rsquare, dice):
                              "big": True, "direction": direction}])
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
+        engine.describe(rsquare[1], {"w": (a-2)*5, "h": (b-2)*5})
         return (True,)
     engine.log("fail to 10_12")
     return room_table_10_12(engine, origin, x, y, direction,
@@ -305,6 +315,7 @@ def room_table_15(engine, origin, x, y, direction, width, rsquare, dice):
                              "big": True, "direction": direction}])
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
+        engine.describe(rsquare[1], {"w": (a-2)*5, "h": (b-2)*5})
         return (True,)
 
     a, b = b, a
@@ -315,11 +326,14 @@ def room_table_15(engine, origin, x, y, direction, width, rsquare, dice):
                              "big": True, "direction": direction}])
         place_entrance(engine, origin, x, y,
                        direction, width, rsquare, dice)
+        engine.describe(rsquare[1], {"w": (a-2)*5, "h": (b-2)*5})
         return (True,)
 
     return room_table_13_14(engine, origin, x, y, direction,
                             width, rsquare, dice)
 
+
+# TODO: weird room shapes
 
 # NOTE: irregular behavior if passages can have width greater than 8(40 ft)
 # (40 ft)
@@ -330,6 +344,9 @@ def dispatch_room(engine, element, dice):
     direction = element[4]
     width = element[5]
     rsquare = element[6]
+    if rsquare[1] == -1:
+        rsquare = engine.generate_description(rsquare)
+        engine.describe(rsquare[1], {"type": "chamber", "w": 0, "h": 0})
     die_roll = dice[0]
     dice = dice[1:]
     # bit of a hack, width is (w, h) tuple
@@ -582,3 +599,495 @@ def dispatch_exit(engine, element, dice):
         return exit_door(engine, x, y, w, h, direction, num, big, dice)
     elif die <= 20:
         return exit_table_11_20(engine, x, y, w, h, direction, num, big, dice)
+
+
+def describe_chamber(engine, d):
+    dice = engine.roll([100, 100])
+    chamber_type = general_chamber(dice[0])
+    ret = "<p>A {} foot by {} foot {}.</p>".\
+          format(d['w'], d['h'], chamber_type)
+    contents = chamber_contents(engine, dice[1])
+    ret += contents
+    return ret
+
+
+def chamber_contents(engine, die=0):
+    die = engine.roll([100])[0]
+    if die <= 8:
+        return "<p>monsters: " + chamber_monster(engine) + "</p>"
+    elif die <= 15:
+        return "<p>monsters: {} with {}.</p>".format(
+                chamber_monster(engine), which_treasure(engine))
+    elif die <= 27:
+        return "<p>monsters: {}.</p>".format(
+                chamber_monster(engine))
+    elif die <= 33:
+        return "<p>monsters: {} guarding {}.</p>".format(
+                chamber_monster(engine), which_treasure(engine))
+    elif die <= 42:
+        return "<p>monsters: {}.</p>"
+    elif die <= 50:
+        return "<p>monsters {} with {}.</p>".format(
+                chamber_monster(engine), which_treasure(engine))
+    elif die <= 58:
+        return "<p>" + chamber_hazard() + " and " + treasure(engine) + "</p>"
+    elif die <= 63:
+        return "<p>" + chamber_obstacle() + "</p>"
+    elif die <= 73:
+        return "<p>" + chamber_trap() + "</p>"
+    elif die <= 76:
+        return "<p>" + chamber_trap() + " protecting " +\
+                which_treasure(engine) + "</p>"
+    elif die <= 80:
+        return "<p>" + chamber_trick() + "</p>"
+    elif die <= 88:
+        return "<p> This is an otherwise empty room </p>"
+    elif die <= 94:
+        return "<p>" + chamber_hazard() + "</p>"
+    elif die <= 100:
+        return "<p>" + which_treasure(engine) + "</p>"
+
+
+def which_treasure(engine):
+    dice = engine.roll([20])
+    if dice[0] <= 18:
+        return treasure(engine)
+    elif dice[0] <= 20:
+        return horde(engine)
+
+
+def chamber_hazard():
+    return "a hazard!"
+
+
+def chamber_obstacle():
+    return "an obstacle!"
+
+
+def chamber_trap():
+    return "a trap!"
+
+
+def chamber_trick():
+    return "a trick!"
+
+
+def chamber_monster(engine):
+    dice = engine.roll([25, 20])
+    die = 75 + dice[0]
+    if die <= 1:
+        return "1 mind flayer arcanist"
+    elif die <= 2:
+        n = sum(engine.roll([3])) + 1
+        return "{} giant poisonous snakes".format(n)
+    elif die <= 3:
+        n = sum(engine.roll([3]))
+        return "{} giant lizards".format(n)
+    elif die <= 4:
+        n = sum(engine.roll([4, 4]))
+        return "{} giant fire beetles".format(n)
+    elif die <= 5:
+        n = sum(engine.roll([8])) + 1
+        return "{} flumphs".format(n)
+    elif die <= 6:
+        return "1 shrieker"
+    elif die <= 7:
+        n = sum(engine.roll([12]))
+        return "{} giant rats".format(n)
+    elif die <= 8:
+        n = sum(engine.roll([4, 4]))
+        return "{} kobolds".format(n)
+    elif die <= 9:
+        n = sum(engine.roll([8])) + 1
+        return "{} stirges".format(n)
+    elif die <= 10:
+        n = sum(engine.roll([4, 4]))
+        return "{} human tribal warriors fleeing the dungeon".format(n)
+    elif die <= 12:
+        n = sum(engine.roll([10]))
+        return "{} troglodytes".format(n)
+    elif die <= 14:
+        n = sum(engine.roll([2]))
+        return "{} gray oozes".format(n)
+    elif die <= 16:
+        n = sum(engine.roll([6, 6, 6]))
+        return "{} stirges".format(n)
+    elif die <= 18:
+        n = sum(engine.roll([3]))
+        return "{} magma mephits".format(n)
+    elif die <= 20:
+        n = sum(engine.roll([10]))
+        return "{} goblins".format(n)
+    elif die <= 22:
+        return "graffiti left by some rude orcs"
+    elif die <= 24:
+        return "1 insect swarm"
+    elif die <= 25:
+        return "1 deep gnome"
+    elif die <= 28:
+        n = sum(engine.roll([8]))+1
+        return "{} drow".format(n)
+    elif die <= 30:
+        n = sum(engine.roll([4]))
+        return "{} violet fungi".format(n)
+    elif die <= 32:
+        n = sum(engine.roll([12]))
+        return "{} kuo-toa".format(n)
+    elif die <= 33:
+        return "1 rust monster"
+    elif die <= 35:
+        return "a rubble strewn passageway that appears to have been cleared\
+from a recent cave-in"
+    elif die <= 37:
+        n = sum(engine.roll([8])) + 1
+        return "{} giant bats".format(n)
+    elif die <= 39:
+        n = sum(engine.roll([6, 6, 6]))
+        return "{} kobolds".format(n)
+    elif die <= 41:
+        n = sum(engine.roll([4, 4]))
+        return "{} grimlocks".format(n)
+    elif die <= 43:
+        n = sum(engine.roll([4])) + 3
+        return "{} swarms of bats".format(n)
+    elif die <= 44:
+        return "one dwarf prospector (a scout) looking for gold"
+    elif die <= 45:
+        if dice[1] % 2 == 0:
+            return "1 carrion crawler"
+        else:
+            return "1 gelatinous cube"
+    elif die <= 46:
+        if dice[1] % 2 == 0:
+            n = sum(engine.roll([8]))
+            return "{} darkmantles".format(n)
+        else:
+            n = sum(engine.roll([4, 4]))
+            return "{} piercers".format(n)
+    elif die <= 47:
+        return "one hell hound"
+    elif die <= 48:
+        n = sum(engine.roll([3]))
+        return "{} specters".format(n)
+    elif die <= 49:
+        n = sum(engine.roll([4]))
+        return "{} bugbears".format(n)
+    elif die <= 50:
+        n = sum(engine.roll([10])) + 5
+        return "{} winged kobolds".format(n)
+    elif die <= 51:
+        n = sum(engine.roll([4]))
+        return "{} fire snakes".format(n)
+    elif die <= 52:
+        n = sum(engine.roll([8, 8])) + 1
+        return "{} troglodytes".format(n)
+    elif die <= 53:
+        n = sum(engine.roll([6]))
+        return "{} giant spiders".format(n)
+    elif die <= 54:
+        n = sum(engine.roll([6, 6, 6]))
+        return "{} kuo-toa".format(n)
+    elif die <= 55:
+        n = sum(engine.roll([4, 4]))
+        return "one goblin boss and {} goblins".format(n)
+    elif die <= 56:
+        n = sum(engine.roll([4, 4, 4, 4]))
+        return "{} grimlocks".format(n)
+    elif die <= 57:
+        return "1 ochre jelly"
+    elif die <= 58:
+        n = sum(engine.roll([10, 10]))
+        return "{} giant centipedes".format(n)
+    elif die <= 59:
+        if dice[1] % 2 == 0:
+            return "1 nothic"
+        else:
+            return "1 giant toad"
+    elif die <= 60:
+        n = sum(engine.roll([4]))
+        m = sum(engine.roll([4, 4, 4, 4, 4]))
+        return "{} myconid adults with {} myconid sprouts".format(n, m)
+    elif die <= 61:
+        if dice[1] % 2 == 0:
+            return "1 minotaur skeleton"
+        else:
+            return "1 minotaur"
+    elif die <= 62:
+        n = sum(engine.roll([6, 6, 6]))
+        return "{} drow".format(n)
+    elif die <= 63:
+        if dice[1] % 2 == 0:
+            return "1 mimic"
+        else:
+            return "1 doppelganger"
+    elif die <= 64:
+        n = sum(engine.roll([6])) + 3
+        return "{} hobgoblins".format(n)
+    elif die <= 65:
+        if dice[1] % 2 == 0:
+            return "1 intellect devourer"
+        else:
+            return "1 spectator"
+    elif die <= 66:
+        n = sum(engine.roll([8])) + 1
+        return "{} orcs".format(n)
+    elif die <= 68:
+        return "a faint tapping coming from inside a nearby wall"
+    elif die <= 69:
+        if dice[1] % 2 == 0:
+            return "1 gibbering mouther"
+        else:
+            return "1 water weird"
+    elif die <= 70:
+        n = sum(engine.roll([12]))
+        return "{} gas spores".format(n)
+    elif die <= 71:
+        return "1 giant constrictor snake"
+    elif die <= 72:
+        n = sum(engine.roll([10]))
+        return "{} shadows".format(n)
+    elif die <= 73:
+        n = sum(engine.roll([3]))
+        return "{} grells".format(n)
+    elif die <= 74:
+        n = sum(engine.roll([4]))
+        return "{} wights".format(n)
+    elif die <= 75:
+        n = sum(engine.roll([8])) + 1
+        return "{} quaggoth spore servants".format(n)
+    elif die <= 76:
+        n = sum(engine.roll([2]))
+        return "{} gargoyles".format(n)
+    elif die <= 77:
+        if dice[1] % 2 == 0:
+            n = sum(engine.roll([4]))
+            return "{} ogres".format(n)
+        else:
+            n = sum(engine.roll([3]))
+            return "{} ettins".format(n)
+    elif die <= 78:
+        n = sum(engine.roll([4]))
+        return "{} dwarf explorers (veterans)".format(n)
+    elif die <= 80:
+        n = sum(engine.roll([3]))
+        return "an abandoned miners camp splattered with blood and the \
+contents of {} dungeoneer's packs".format(n)
+    elif die <= 81:
+        if dice[1] % 2 == 0:
+            return "1 chuul"
+        elif dice[1] % 2 == 0:
+            return "1 salamander"
+    elif die <= 82:
+        if dice[1] % 2 == 0:
+            n = sum(engine.roll([4]))
+            return "{} phase spiders".format(n)
+        else:
+            n = sum(engine.roll([3]))
+            return "{} hook horrors".format(n)
+    elif die <= 83:
+        n = sum(engine.roll([4, 4, 4, 4, 4]))
+        return "{} duergar".format(n)
+    elif die <= 84:
+        n = sum(engine.roll([3]))
+        if n == 1:
+            return "1 ghost"
+        elif n == 2:
+            return "1 flameskull"
+        elif n == 3:
+            return "1 wraith"
+    elif die <= 85:
+        return "1 druid with on cave (polar) bear"
+    elif die <= 86:
+        n = sum(engine.roll([4]))
+        m = sum(engine.roll([10, 10]))
+        return "1 hobgoblin captain with {} half-ogres and {} hobgoblins".\
+            format(n, m)
+    elif die <= 87:
+        if dice[1] % 2 == 0:
+            return "1 earth elemental"
+        else:
+            return "1 black pudding"
+    elif die <= 88:
+        n = sum(engine.roll([8]))+1
+        return "kuo-toa monitor with {} kuo-toa whips".format(n)
+    elif die <= 89:
+        n = sum(engine.roll([3]))
+        return "1 quaggoth thonot with {} quaggoths".format(n)
+    elif die <= 90:
+        if dice[1] % 2 == 0:
+            return "1 beholder zombie"
+        else:
+            return "1 bone naga"
+    elif die <= 91:
+        n = sum(engine.roll([4]))
+        m = sum(engine.roll([8, 8]))
+        return "1 orc Eye of Gruumsh with {} orogs and {} orcs".format(n, m)
+    elif die <= 92:
+        n = sum(engine.roll([4]))
+        m = sum(engine.roll([10]))
+        return "{} ghasts with {} ghouls".format(n, m)
+    elif die <= 95:
+        return "A reeking puddle where slimy water has dripped \
+from the ceiling"
+    elif die <= 96:
+        if dice[1] % 2 == 0:
+            return "1 otyugh"
+        else:
+            return "1 roper"
+    elif die <= 97:
+        return "1 vampire spawn"
+    elif die <= 98:
+        return "1 chimera"
+    elif die <= 99:
+        return "1 mind flayer"
+    elif die <= 100:
+        return "1 spirit naga"
+
+
+def horde(engine):
+    ret = "{} copper pieces, {} silver pieces, {} gold pieces, and {} platinum\
+ pieces ".format(
+           sum(engine.roll([6, 6])) * 100,
+           sum(engine.roll([6, 6])) * 1000,
+           sum(engine.roll([6, 6, 6, 6, 6, 6])) * 100,
+           sum(engine.roll([6, 6, 6])) * 10)
+    # die = engine.roll([100])[0]
+    return ret
+
+
+def treasure(engine):
+    dice = engine.roll([100])
+    if dice[0] <= 30:
+        return "{} copper and {} electrum pieces".format(
+                sum(engine.roll([6, 6, 6, 6])) * 100,
+                sum(engine.roll([6])) * 10)
+    elif dice[0] <= 60:
+        return "{} silver and {} gold pieces".format(
+                sum(engine.roll([6, 6, 6, 6, 6, 6])) * 10,
+                sum(engine.roll([6, 6])) * 10)
+    elif dice[0] <= 70:
+        return "{} electrum and {} gold pieces".format(
+                sum(engine.roll([6, 6, 6])) * 10,
+                sum(engine.roll([6, 6])) * 70)
+    elif dice[0] <= 95:
+        return "{} gold pieces".format(
+                sum(engine.roll([6, 6, 6, 6])) * 10)
+    elif dice[0] <= 100:
+        return "{} gold and {} platinum pieces".format(
+                sum(engine.roll([6, 6])),
+                sum(engine.roll([6, 6, 6])))
+
+
+def general_chamber(die):
+    if die <= 1:
+        return "antechamber"
+    elif die <= 3:
+        return "armory"
+    elif die <= 4:
+        return "audience chamber"
+    elif die <= 5:
+        return "aviary"
+    elif die <= 7:
+        return "banquet room"
+    elif die <= 10:
+        return "barracks"
+    elif die <= 11:
+        return "latrine"
+    elif die <= 12:
+        return "bedroom"
+    elif die <= 13:
+        return "bestiary"
+    elif die <= 16:
+        return "cell"
+    elif die <= 17:
+        return "chantry"
+    elif die <= 18:
+        return "chapel"
+    elif die <= 20:
+        return "cistern"
+    elif die <= 22:
+        return "closet"
+    elif die <= 24:
+        return "conjuring room"
+    elif die <= 26:
+        return "court"
+    elif die <= 29:
+        return "crypt"
+    elif die <= 31:
+        return "dining room"
+    elif die <= 33:
+        return "divination room"
+    elif die <= 34:
+        return "dormitory"
+    elif die <= 35:
+        return "dressing room"
+    elif die <= 36:
+        return "vestibule"
+    elif die <= 38:
+        return "gallery"
+    elif die <= 40:
+        return "game room"
+    elif die <= 43:
+        return "guard room"
+    elif die <= 45:
+        return "hall"
+    elif die <= 49:
+        return "great hall"
+    elif die <= 50:
+        return "kennel"
+    elif die <= 52:
+        return "kitchen"
+    elif die <= 54:
+        return "laboratory"
+    elif die <= 57:
+        return "library"
+    elif die <= 59:
+        return "lounge"
+    elif die <= 60:
+        return "meditatin chamber"
+    elif die <= 61:
+        return "observatory"
+    elif die <= 62:
+        return "office"
+    elif die <= 64:
+        return "pantry"
+    elif die <= 66:
+        return "prison"
+    elif die <= 68:
+        return "reception room"
+    elif die <= 70:
+        return "refactory"
+    elif die <= 71:
+        return "robing room"
+    elif die <= 72:
+        return "salon"
+    elif die <= 74:
+        return "shrine"
+    elif die <= 76:
+        return "sitting room"
+    elif die <= 78:
+        return "smithy"
+    elif die <= 79:
+        return "stable"
+    elif die <= 81:
+        return "storage room"
+    elif die <= 83:
+        return "vault"
+    elif die <= 85:
+        return "study"
+    elif die <= 88:
+        return "temple"
+    elif die <= 90:
+        return "throne room"
+    elif die <= 91:
+        return "torture chamber"
+    elif die <= 93:
+        return "training room"
+    elif die <= 95:
+        return "museum"
+    elif die <= 96:
+        return "nursery"
+    elif die <= 98:
+        return "well"
+    elif die <= 100:
+        return "workshop"

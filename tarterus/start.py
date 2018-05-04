@@ -46,6 +46,21 @@ def start_table_1(engine, origin, dice):
         x = engine.maparray.w // 2 - w // 2
         y = engine.maparray.h // 2 - h // 2
 
+    engine.generate_description(('hall', 1))
+    engine.describe(1, {'type': 'passage',
+                        'w': 10})
+    engine.generate_description(('hall', 2))
+    engine.describe(2, {'type': 'passage',
+                        'w': 10})
+    engine.generate_description(('hall', 3))
+    engine.describe(3, {'type': 'passage',
+                        'w': 10})
+    engine.generate_description(('hall', 4))
+    engine.describe(4, {'type': 'passage',
+                        'w': 10})
+    engine.generate_description(('hall', 5))
+    engine.describe(5, {'type': 'chamber', 'w': 20, 'h': 20})
+
     if origin != 'n':
         engine.add(['hall', 'passage', x+4, y-1, 'n', 2, ('hall', 1)])
 
@@ -122,6 +137,12 @@ def start_table_2(engine, origin, dice):
             engine.maparray[x, y+2:y+4] = ('open', 1)
             engine.add(['hall', 'exit', x-1, y+2, 'w', 2, ('hall', -1)])
 
+    engine.generate_description(('room', 1))
+    engine.describe(1, {'type': 'chamber',
+                        'w': 20, 'h': 20})
+    engine.generate_description(('hall', 2))
+    engine.describe(2, {'type': 'passage',
+                        'w': 10})
     directions = ['n', 'e', 's', 'w']
     directions.remove(d)
     i = dice[1] % 3
@@ -140,19 +161,19 @@ def start_table_2(engine, origin, dice):
             engine.add(['door', 'exit', x+3, y+h-1, 's', 1, ('door', -1)])
         elif d == 'w':
             engine.add(['door', 'exit', x, y+3, 'w', 1, ('door', -1)])
-
     return (True,)
 
 
 def start_table_3(engine, origin, dice):
-    pass     
+    pass
+
 
 def dispatch_start(engine, element, dice):
     origin = element[1]["origin"]
     die = dice[0]
     dice = dice[1:]
 
-    if False:  # die <= 1:
+    if die <= 1:
         return start_table_1(engine, origin, dice)
     elif die <= 2:
         return start_table_2(engine, origin, dice)

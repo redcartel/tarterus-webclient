@@ -1,12 +1,12 @@
 static/js/map_canvas.js 
+static/css/custom.css
+templates/index.html 
 tarterus/maparray.py 
 tarterus/mapgen.py 
 tarterus/passage.py
 tarterus/graphpaper.py
 tarterus/engine.py
-runtests.py
-serv-full.py 
-templates/index.html 
-static/css/custom.css
+tarterus/start.py
 tarterus/room.py
 tarterus/door.py
+serv-full.py 

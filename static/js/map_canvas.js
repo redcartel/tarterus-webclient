@@ -55,9 +55,7 @@
         globals.ctx.height = window.innerHeight - $(".header").height();
         dims.cw = Math.ceil(globals.ctx.width / 16);
         dims.ch = Math.ceil(globals.ctx.height / 16);
-        // console.log("cw: " + dims.cw + ", ch: " + dims.ch);
         if (dims.mw !== null) {
-            // console.log("mw: " + dims.mw + ", mh: " + dims.mh);
         }
         if (xoff === -1 && dims.mw !== null) {
             dims.xoffset = Math.floor(dims.mw / 2 - dims.cw / 2);
@@ -70,7 +68,6 @@
             dims.yoffset = Math.floor(center_y - dims.ch / 2);
         }
         if (dims.xoffset !== null) {
-            // console.log("xoffset: " + dims.xoffset + ", yoffset: " + dims.yoffset);
         }
     };
 
@@ -107,14 +104,17 @@
         if (x < 0 || x >= dims.mw || y < 0 || y >= dims.mh) {
             return;
         }
-            $("#description").html(globals.room_list[globals.section_map[x][y]].description);
+            var number = globals.section_map[x][y];
+            console.log(globals.room_list[number]);
+            var htmlContent = globals.room_list[number].description;
+            htmlContent = "<li class='roomNumber'>" + number + "</li>" + htmlContent;
+            $("#description").html(htmlContent);
         // }
     };
 
 
     var genMap = function(w, h, typ, ent="s", level=1) {
         var mapUrl = '/get_map?w=' + w + '&h=' + h + '&t=' + typ + '&e=' + ent + '&l=' + level;
-        console.log(mapUrl);
         $.ajax({
             'async': true,
             'global': false,
@@ -123,11 +123,9 @@
             'success': function(data) {
                 globals.map = data.mp;
                 globals.section_map = data.rnums;
-                console.log("generated log:\n" + data.log);
                 globals.room_list = data.rlist;
                 dims.mw = globals.map.length;
                 dims.mh = globals.map[0].length;
-                console.log('map json loaded.');
                 size_canvas();
                 draw();
             },
@@ -149,7 +147,6 @@
         var map_d = $.Deferred();
         globals.tiles.src = globals.tiles_src;
         $(globals.tiles).on('load', function() {
-            console.log('imagemap loaded');
             tile_d.resolve();
         });
         var mapUrl = '/default_room?w=' + dims.cw + '&h=' + dims.ch;
@@ -162,7 +159,6 @@
                 globals.map = data.mp;
                 globals.section_map = data.rnums;
                 globals.room_list = data.rlist;
-                console.log('map json loaded.');
                 map_d.resolve();
             },
             'error': function() {
@@ -199,16 +195,13 @@
         $("#generate").click(function(e) {
             var re = /\d+/g;
             var val = $("#size").val();
-            console.log(val.match(re));
             var w = val.match(re)[0];
             var h = val.match(re)[1];
             var tval = $("#type").val();
-            console.log(val);
             genMap(w,h,tval);
         });
 
         $("canvas").click(function(e) {
-            console.log('click');
             globals.dragging = false;
             var xp = Math.floor(e.pageX - $("#display").offset().left);
             var yp = Math.floor(e.pageY - $("#display").offset().top);

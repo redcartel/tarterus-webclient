@@ -292,8 +292,8 @@ def fetch_map(w, h, typ="default"):
         e.add(["start", {"origin": "m"}])
         e.gen_map()
         maparray = e.maparray
-        roomlist = [{}]
-#        maparray, roomlist = gen_map(w, h)
+        e.process_descriptions()
+        roomlist = e.descriptions
     if typ == "splash":
         maparray, roomlist = gen_splash(w, h)
     add_log("fetch_map")

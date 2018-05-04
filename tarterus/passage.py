@@ -385,7 +385,6 @@ def connect(engine, result, dice):
 
     if dice[1] % 4 in [1, 3]:
         return (True,)
-    print(result)
     blocks = result[1][3]
     if len(blocks) == 0:
         return (True,)
@@ -432,8 +431,9 @@ def dispatch_passage(engine, element, dice):
     width = element[5]
     psquare = element[6]
     if psquare[1] == -1:
-        # TODO: add new passage to roomlist
-        pass
+        psquare = engine.generate_description(psquare)
+        engine.describe(psquare[1], {"type": "passage",
+                                     "w": width * 5})
     die_roll = dice[0]
     dice = dice[1:]
 
@@ -495,3 +495,22 @@ def dispatch_passage(engine, element, dice):
     # else:
     #    passage_table_20(engine, origin, x, y,
     #                     direction, width, psquare, dice)
+
+
+def describe_passage(engine, d):
+    die = engine.roll([4])[0]
+    if d['w'] < 40:
+        return "A {}. ft wide passage.".format(d['w'])
+    if d['w'] >= 40:
+        if die <= 1:
+            return("A {} ft. wide passage with a row of\
+pillars down the middle.".format(d['w']))
+        elif die <= 2:
+            return("A {} ft. wide passage with a double row of pillars".
+                   format(d['w']))
+        elif die <= 3:
+            return ("A {} ft. wide passage with 20 ft. ceilings".
+                    format(d['w']))
+        elif die <= 4:
+            return ("A {} ft. wide passage with 20 ft. high ceileings and a\
+gallery 10 ft. up with access to the above level.")

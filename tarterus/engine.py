@@ -1,12 +1,12 @@
 from tarterus.maparray import MapArray
-from tarterus.passage import dispatch_passage  # , dispatch_door
+from tarterus.passage import dispatch_passage, describe_passage
 from tarterus.passage import DICE_ARRAY as passage_dice
 from random import randint
-from tarterus.room import dispatch_room
+from tarterus.room import dispatch_room, describe_chamber
 from tarterus.room import DICE_ARRAY as room_dice
 from tarterus.room import dispatch_exit
 from tarterus.room import EXIT_DICE_ARRAY as exit_dice
-from tarterus.door import dispatch_door
+from tarterus.door import dispatch_door, describe_door
 from tarterus.door import DICE_ARRAY as door_dice
 from tarterus.start import DICE_ARRAY as start_dice
 from tarterus.start import dispatch_start
@@ -42,12 +42,18 @@ class Engine():
 
         self.engine = self.the_engine()
 
-    def add_new_description(self, content={}):
-        n = len(self.descriptions)
-        self.log2(":: add_new_description\n\tn={}, content={}".
-                  format(n, content))
-        self.descriptions.append(content)
-        return n
+    def generate_description(self, t):
+        n = t[1]
+        if n == -1:
+            n = len(self.descriptions)
+        if n >= len(self.descriptions):
+            for _ in range(len(self.descriptions), n+1):
+                self.descriptions.append({'num': n})
+        return (t[0], n)
+
+    def describe(self, n, content):
+        old_content = self.descriptions[n]
+        self.descriptions[n] = {**old_content, **content}
 
     def process_params(self):
         self.w = self.params['w']
@@ -204,19 +210,6 @@ class Engine():
             self.log("::dispatch_exit\n\t{} {}".format(element, dice))
             return dispatch_exit(self, element, dice)
 
-    # remove this once there are real start rooms
-    def init_halls(self):
-        self.add(["hall", "start", 37, 37, "n", 2, ("hall", 1)])
-        self.add(["hall", "start", 39, 38, "e", 2, ("hall", 1)])
-        self.add(["hall", "start", 37, 40, "s", 2, ("hall", 1)])
-        self.add(["hall", "start", 36, 38, "w", 2, ("hall", 1)])
-
-    def init_big_halls(self):
-        self.add(["hall", "start", 35, 35, "n", 2, ("hall", 1)])
-        self.add(["hall", "start", 34, 36, "w", 4, ("hall", 1)])
-        self.add(["hall", "start", 35, 44, "s", 6, ("hall", 1)])
-        self.add(["hall", "start", 43, 36, "e", 8, ("hall", 1)])
-
     def __str__(self):
         if len(self.roll_log) > 2:
             last_roll = self.roll_log[-3:]
@@ -232,6 +225,15 @@ last roll:
 pending elements:
 {}""".format(self.maparray, self.descriptions, last_roll, self.pending)
 
+    def process_descriptions(self):
+        for d in self.descriptions:
+            if 'type' in d:
+                if d['type'] == 'chamber':
+                    d['description'] = describe_chamber(self, d)
+                elif d['type'] == 'passage':
+                    d['description'] = describe_passage(self, d)
+                elif d['type'] == 'door':
+                    d['description'] = describe_door(self, d)
 
 # COMMANDS
 # ['step']                              pop an element & dispatch
