@@ -1,4 +1,4 @@
-from tarterus.maparray import MapArray
+from tarterus.maparray import MapArray, MapSquare
 from tarterus import passage
 from tarterus.engine import Engine, PendingList
 from tarterus import room
@@ -7,6 +7,15 @@ from tarterus import door
 # TODO: GENERAL TODOs
 # TODO: Preserve corner pieces when walls write over walls
 
+
+def maparray_tests():
+    m = MapArray(('void', 0), (10, 10))
+    assert ('void', 0) == m[0,0]
+    assert ('void', 0) == m[5, 5]
+    m[4, 4] = ('hall', 0)
+    assert ('hall', 0) == m[4, 4]
+    x = len(m[0:4, 1:2].squares())
+    assert x == 4
 
 def engine_tests():
     print("Engine tests:")
@@ -362,4 +371,4 @@ if __name__ == "__main__":
     # passage_tests()
     # room_tests()
     # door_tests()
-    door_passage_tests()
+    # door_passage_tests()

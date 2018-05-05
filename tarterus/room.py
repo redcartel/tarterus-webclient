@@ -673,8 +673,7 @@ def chamber_trick():
 
 
 def chamber_monster(engine):
-    dice = engine.roll([25, 20])
-    die = 75 + dice[0]
+    dice = engine.roll([100, 20])
     if die <= 1:
         return "1 mind flayer arcanist"
     elif die <= 2:
@@ -951,8 +950,176 @@ def horde(engine):
            sum(engine.roll([6, 6])) * 1000,
            sum(engine.roll([6, 6, 6, 6, 6, 6])) * 100,
            sum(engine.roll([6, 6, 6])) * 10)
-    # die = engine.roll([100])[0]
-    return ret
+    die = engine.roll([100])[0]
+    if die <= 4:
+        return ret
+    elif die <= 10:
+        r = "and {} 25 gp art objects".format(sum(engine.roll([4, 4])))
+        return ret + r
+    elif die <= 16:
+        r = "and {} 50 gp art objects".format(sum(engine.roll([6, 6, 6])))
+        return ret + r
+    elif die <= 22:
+        r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
+        return ret + r
+    elif die <= 28:
+        r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
+    elif die <= 32:
+        r = "and {} 25 gp art objects".format(sum(engine.roll([4, 4])))
+        r2 = magic_items(engine, "a", engine.roll([6])[0])
+        return r2 + " and " + ret + r
+    elif die <= 36:
+        r = "and {} 50 gp art objects".format(sum(engine.roll([6, 6, 6])))
+        r2 = magic_items(engine, "a", engine.roll([6])[0])
+        return r2 + " and " + ret + r
+    elif die <= 40:
+        r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
+        r2 = magic_items(engine, "a", engine.roll([6])[0])
+        return r2 + " and " + ret + r
+    elif die <= 44:
+        r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
+        r2 = magic_items(engine, "a", engine.roll([6])[0])
+        return r2 + " and " + ret + r
+    elif die <= 49:
+        r = "and {} 25 gp art objects".format(sum(engine.roll([4, 4])))
+        r2 = magic_items(engine, "b", engine.roll([4])[0])
+        return r2 + " and " + ret + r
+    elif die <= 54:
+        r = "and {} 50 gp art objects".format(sum(engine.roll([6, 6, 6])))
+        r2 = magic_items(engine, "b", engine.roll([4])[0])
+        return r2 + " and " + ret + r
+    elif die <= 59:
+        r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
+        r2 = magic_items(engine, "b", engine.roll([4])[0])
+        return r2 + " and " + ret + r
+    elif die <= 63:
+        r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
+        r2 = magic_items(engine, "b", engine.roll([4])[0])
+        return r2 + " and " + ret + r
+    elif die <= 66:
+        r = "and {} 25 gp art objects".format(sum(engine.roll([4, 4])))
+        r2 = magic_items(engine, "c", engine.roll([4])[0])
+        return r2 + " and " + ret + r
+    elif die <= 69:
+        r = "and {} 50 gp art objects".format(sum(engine.roll([6, 6, 6])))
+        r2 = magic_items(engine, "c", engine.roll([4])[0])
+        return r2 + " and " + ret + r
+    elif die <= 72:
+        r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
+        r2 = magic_items(engine, "c", engine.roll([4])[0])
+        return r2 + " and " + ret + r
+    elif die <= 74:
+        r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
+        r2 = magic_items(engine, "c", engine.roll([4])[0])
+        return r2 + " and " + ret + r
+    elif die <= 76:
+        r = "and {} 25 gp art objects".format(sum(engine.roll([4, 4])))
+        r2 = magic_items(engine, "d", 1)
+        return r2 + " and " + ret + r
+    elif die <= 78:
+        r = "and {} 50 gp art objects".format(sum(engine.roll([6, 6, 6])))
+        r2 = magic_items(engine, "d", 1)
+        return r2 + " and " + ret + r
+    elif die <= 79:
+        r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
+        r2 = magic_items(engine, "d", 1)
+        return r2 + " and " + ret + r
+    elif die <= 80:
+        r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
+        r2 = magic_items(engine, "d", 1)
+        return r2 + " and " + ret + r
+    elif die <= 84:
+        r = "and {} 25 gp art objects".format(sum(engine.roll([4, 4])))
+        r2 = magic_items(engine, "f", engine.roll([4])[0])
+        return r2 + " and " + ret + r
+    elif die <= 88:
+        r = "and {} 50 gp art objects".format(sum(engine.roll([6, 6, 6])))
+        r2 = magic_items(engine, "f", engine.roll([4])[0])
+        return r2 + " and " + ret + r
+    elif die <= 91:
+        r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
+        r2 = magic_items(engine, "f", engine.roll([4])[0])
+        return r2 + " and " + ret + r
+    elif die <= 94:
+        r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
+        r2 = magic_items(engine, "f", engine.roll([4])[0])
+        return r2 + " and " + ret + r
+    elif die <= 96:
+        r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
+        r2 = magic_items(engine, "g", engine.roll([4])[0])
+        return r2 + " and " + ret + r
+    elif die <= 98:
+        r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
+        r2 = magic_items(engine, "g", engine.roll([4])[0])
+        return r2 + " and " + ret + r
+    elif die <= 99:
+        r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
+        r2 = magic_items(engine, "h", 1)
+        return r2 + " and " + ret + r
+    elif die <= 100:
+        r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
+        r2 = magic_items(engine, "h", 1)
+        return r2 + " and " + ret + r
+
+
+def magic_items(engine, table, num):
+    objects = []
+    for i in range(num):
+        if table == "a":
+            objects.append(magic_item_a(engine))
+        elif table == "b":
+            objects.append(magic_item_b(engine))
+        elif table == "c":
+            objects.append(magic_item_c(engine))
+        elif table == "d":
+            objects.append(magic_item_d(engine))
+        elif table == "e":
+            objects.append(magic_item_e(engine))
+        elif table == "f":
+            objects.append(magic_item_f(engine))
+        elif table == "g":
+            objects.append(magic_item_g(engine))
+        elif table == "h":
+            objects.append(magic_item_h(engine))
+
+    if num == 1:
+        return objects[0]
+    elif num == 2:
+        return objects[0] + " and " + objects[1]
+    else:
+        return ", ".join(objects[0:-1]) + ", and " + objects[-1]
+
+
+def magic_item_a(engine):
+    return "an item from table A"
+
+
+def magic_item_b(engine):
+    return "an item from table B"
+
+
+def magic_item_c(engine):
+    return "an item from table C"
+
+
+def magic_item_d(engine):
+    return "an item from table D"
+
+
+def magic_item_e(engine):
+    return "an item from table E"
+
+
+def magic_item_f(engine):
+    return "an item from table F"
+
+
+def magic_item_g(engine):
+    return "an item from table G"
+
+
+def magic_item_h(engine):
+    return "an item from table H"
 
 
 def treasure(engine):

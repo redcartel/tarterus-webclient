@@ -61,6 +61,9 @@ def _to_nonempty_tuple_array(lst):
                         ).with_traceback(tb)
     return lst
 
+def _decode(_bytes):
+    sq_type = MapSquare._FROM_NUM[int.from_bytes(_bytes[0], 'big')]
+    rnum = int.from_bytes(_bytes[1:4], 'big')
 
 class MapSquare(tuple):
     """
@@ -112,6 +115,42 @@ class MapSquare(tuple):
         'errr': 'X',
         'open': '_'
     }
+
+    _TO_NUM = {
+        'void': 0,
+        'vwal': 1,
+        'hwal': 2,
+        'room': 3,
+        'hall': 4,
+        'tcor': 5,
+        'bcor': 6,
+        'door': 7,
+        'sdwn': 8,
+        'stup': 9,
+        'errr': 10,
+        'open': 11
+    }
+
+    _FROM_NUM = {
+        0: 'void',
+        1: 'vwal',
+        2: 'hwal',
+        3: 'room',
+        4: 'hall',
+        5: 'tcor',
+        6: 'bcor',
+        7: 'door',
+        8: 'sdwn',
+        9: 'stup',
+        10: 'errr',
+        11: 'open'
+    }
+    
+    def bytes(self):
+        global _TO_NUM
+        type_code = _TO_NUM[(self[0])].to_bytes(1, 'big')
+        rnum_code = self[1].to_bytes(3, 'big')
+        return type_code + rnum_code
 
 
 class MapVector(list):
