@@ -1,4 +1,5 @@
 import sys
+import types
 
 """
 This module implements the core datatypes of Tarterus, the MapSquare and
@@ -61,9 +62,12 @@ def _to_nonempty_tuple_array(lst):
                         ).with_traceback(tb)
     return lst
 
+
 def _decode(_bytes):
-    sq_type = MapSquare._FROM_NUM[int.from_bytes(_bytes[0], 'big')]
+    sq_type = MapSquare._FROM_NUM[int.from_bytes(_bytes[0:1], 'big')]
     rnum = int.from_bytes(_bytes[1:4], 'big')
+    return MapSquare(sq_type, rnum)
+
 
 class MapSquare(tuple):
     """
@@ -76,6 +80,9 @@ class MapSquare(tuple):
 
         *args   either a single tuple (string,int) or a string and an int
         """
+        if isinstance(args[0], bytes):
+            return _decode(args[0])
+
         if isinstance(args[0], MapSquare):
             return args[0]
 
@@ -145,68 +152,93 @@ class MapSquare(tuple):
         10: 'errr',
         11: 'open'
     }
-    
+
     def bytes(self):
         global _TO_NUM
-        type_code = _TO_NUM[(self[0])].to_bytes(1, 'big')
+        type_code = MapSquare._TO_NUM[(self[0])].to_bytes(1, 'big')
         rnum_code = self[1].to_bytes(3, 'big')
         return type_code + rnum_code
 
 
-class MapVector(list):
+class MapVector:
     """
     MapVector is a 1 dimensional list of MapSquares that preserves width.
 
     :property w: width of the vector
     """
-    def __init__(self, lst, siz=0):
-        """
-        Construct a new MapVector from a list of MapSquare-like objects
-        the MapVector is a copy of the list, even if that list is a MapVector
-        itself
+    def __init__(self, lst, size=0):
+        if isinstance(lst, bytes):
+            lstlen = len(lst) // 4
+            if size == 0:
+                size = lstlen
+            chunks = []
+            for i in range(size):
+                pos = (i % lstlen) * 4
+                chunks.append(lst[pos:pos+4])
+            _bytes = b''.join(chunks)
+        else:
+            if isinstance(lst, tuple):
+                lst = [lst]
+            elif isinstance(lst, types.GeneratorType):
+                lst = list(lst)
 
-        list:       list of MapSquares. Must not be empty. If lst is a
-                    non-list, it is treated like a 1 element list.
-
-        siz:        the desired length of the constructed vector. The list will
-                    be cropped or repeated as needed to achieve this.
-        """
-        lst = _to_nonempty_tuple_vector(lst)
-        if siz == 0:
-            siz = len(lst)
-        new = [MapSquare(lst[i % len(lst)]) for i in range(siz)]
-        list.__init__(self, new)
-        self.w = len(self)
-
-    def __str__(self):
-        """
-        Row of chars from MapSquares.
-        """
-        return "".join(str(e) for e in self)
+            if size == 0:
+                size = len(lst)
+            self.ms_list = [MapSquare(lst[i % len(lst)]) for i in range(size)]
+            _bytes = b''.join(ms.bytes() for ms in self.ms_list)
+        self.w = size
+        self.byte_array = bytearray(_bytes)
 
     def __repr__(self):
-        r = list.__repr__(self)
-        return 'MapVector(%s)' % r
+        gen = (bytes(self.byte_array[p:p+4]) for p in range(0, self.w*4, 4))
+        msreprs = (', '.join(MapSquare(bs).__repr__() for bs in gen))
+        return 'MapVector([{}])'.format(msreprs)
 
-#   Decided to leave list __getitem__ as is, which means slices do not return
-#   new MapVectors. MapVector should not be used outside of this Module.
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            _range = range(*index.indices(self.w))
+            indices = (i * 4 for i in _range)
+            _bytes = (bytes(self.byte_array[i:i+4]) for i in indices)
+            return MapVector(_bytes)
+        else:
+            if index < 0:
+                index = self.w + index
+            i = index * 4
+            _bytes = bytes(self.byte_array[i:i+4])
+            return MapSquare(_bytes)
 
-    def __setitem__(self, select, lst):
-        """
-        []= Size-preservinge in-place replacement of MapSquares & slices
+    def __setitem__(self, index, lst):
+        mv = MapVector(lst)
 
-        select: index or range of MapSquares to be replaced
-        lst:    MapSquare or list of MapSquares from which to replace. Will be
-                repeated or cropped to preserve width of the MapVector
-        """
-        lst = _to_nonempty_tuple_vector(lst)
-        select = _n_to_slice(select)
-        ind = range(len(self))[select]
-        for i in range(len(ind)):
-            list.__setitem__(self, ind[i], MapSquare(lst[i % len(lst)]))
+        if isinstance(index, slice):
+            _range = range(*index.indices(self.w))
+            indices = [i * 4 for i in _range]
+
+        else:
+            if index < 0:
+                index = self.w + index
+            indices = [index * 4]
+
+        for i in range(len(indices)):
+            j = indices[i]
+            k = (i % mv.w) * 4
+            self.byte_array[j:j+4] = mv.byte_array[k:k+4]
+
+    def bytes(self):
+        return bytes(self.byte_array)
+
+    def squares(self):
+        _bytes = (bytes(self.byte_array[i*4:i*4+4]) for i in range(self.w))
+        return [MapSquare(b) for b in _bytes]
+
+    def __str__(self):
+        return ''.join(str(ms) for ms in self.squares())
+
+    def __len__(self):
+        return len(self.byte_array) // 4
 
 
-class MapArray(list):
+class MapArray:
     """
     A 2 dimensional grid of MapSquares. Provides 2 dimensional selectors
     and set operations that preserve the size of the array.
@@ -214,28 +246,69 @@ class MapArray(list):
     self.w  the x-dimension (width) of the MapArray
     self.h  the y-dimension (height) of the MapArray
     """
-    def __init__(self, arry, siz=(0, 0)):
-        """
-        Construct a new MapArray
 
-        arry:   List of list of MapSquare-like tuples. Can also accept list
-                of tuples or just a tuple.
-        size:   number of rows for a 1 dimensional input or (x,y) dimensions
-                for a 2 dimensional input. Size of new MapArray. Elements of
-                arry will be repeated or cropped to accomodate this size.
-        """
-        arry = _to_nonempty_tuple_array(arry)
-        if siz == (0, 0):
-            self.h, self.w = len(arry), len(arry[0])
-        elif not isinstance(siz, tuple):
-            self.h, self.w = siz, len(arry[0])
-        else:
-            self.w, self.h = siz
-        if self.h < 1 or self.w < 1:
-            raise RuntimeError("MapArray cannot have 0 width or height")
+    def __init__(self, array, siz=(0, 0)):
+        self.vectors = []
+        if isinstance(array, bytearray):
+            array = bytes(array)
 
-        new = [MapVector(arry[i % len(arry)], self.w) for i in range(self.h)]
-        list.__init__(self, new)
+        if isinstance(array, bytes):
+            w = size[0]
+            h = size[1]
+            
+            if w * h * 4 != len(bytes):
+                raise ValueError("specified size must match bytes")
+            
+            for y in h:
+                self.vectors.append(MapVector(array[y*w*4:y*w*4+y*w*4]))
+        
+        elif isinstance(array, tuple):
+            w = size[0]
+            h = size[1]
+
+            for _ in range(h):
+                self.vectors.append(MapVector(array, w))
+
+        else if isinstance(array, list):
+            if isinstance(array[0], bytes):
+                for bts in array:
+                    self.vectors.append(MapVector(bts))
+            else:
+                if size == (0, 0):
+                    h = len(array)
+                    w = len(array[0])
+                for r in range(h):
+                    vectors.append(MapVector(array[r % len(array)], w))
+
+    def __repr__(self):
+        return("MapArray({})".format(self.vectors))
+
+    def __str__(self):
+        return("\n".join(str(vec) for vec in self.vectors))
+
+
+#     def __init__(self, arry, siz=(0, 0)):
+#         """
+#         Construct a new MapArray
+# 
+#         arry:   List of list of MapSquare-like tuples. Can also accept list
+#                 of tuples or just a tuple.
+#         size:   number of rows for a 1 dimensional input or (x,y) dimensions
+#                 for a 2 dimensional input. Size of new MapArray. Elements of
+#                 arry will be repeated or cropped to accomodate this size.
+#         """
+#         arry = _to_nonempty_tuple_array(arry)
+#         if siz == (0, 0):
+#             self.h, self.w = len(arry), len(arry[0])
+#         elif not isinstance(siz, tuple):
+#             self.h, self.w = siz, len(arry[0])
+#         else:
+#             self.w, self.h = siz
+#         if self.h < 1 or self.w < 1:
+#             raise RuntimeError("MapArray cannot have 0 width or height")
+# 
+#         new = [MapVector(arry[i % len(arry)], self.w) for i in range(self.h)]
+#         list.__init__(self, new)
 
     def __str__(self):
         """

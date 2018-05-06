@@ -1,6 +1,6 @@
-from maparray import MapSquare
-from maparray import MapVector
-from maparray import MapArray
+from tarterus.maparray import MapSquare
+from tarterus.maparray import MapVector
+from tarterus.maparray import MapArray
 import unittest
 
 
@@ -24,6 +24,12 @@ class MapArrayModuleTest(unittest.TestCase):
         self.assertEqual(str(MapSquare(('room', 0))), '.', "Constructor with tuple")
         self.assertEqual(MapSquare(MapSquare('stup', 0)).__repr__(), "MapSquare('stup', 0)", "Nested constructor")
         self.assertEqual(str(MapSquare(MapSquare('stup', 0))), "<")
+        s = MapSquare('hall', 10)
+        _ = s.bytes()
+        self.assertEqual((4).to_bytes(1, 'big')+(10).to_bytes(3, 'big'), _)
+        t = MapSquare(_)
+        self.assertEqual(s, t)
+
 
     def test02_SqImmutable(self):
         self.assertEqual(isinstance(MapSquare('vwal', 0), tuple), True, "tuple inheritance")
@@ -33,7 +39,7 @@ class MapArrayModuleTest(unittest.TestCase):
         self.assertEqual(a, b, "equality by value")
 
     def test03_VecConstruct(self):
-        mv1 = MapVector(MapSquare('door', 0))
+        mv1 = MapVector([MapSquare('door', 0)])
         st1 = "MapVector([MapSquare('door', 0)])"
         self.assertEqual(mv1.__repr__(), st1)
         self.assertEqual(str(mv1), "+")
