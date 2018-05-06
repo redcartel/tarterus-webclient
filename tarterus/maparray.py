@@ -247,38 +247,71 @@ class MapArray:
     self.h  the y-dimension (height) of the MapArray
     """
 
-    def __init__(self, array, siz=(0, 0)):
+    def __init__(self, array, size=(0, 0)):
         self.vectors = []
+
+        # convert bytearray into bytes
         if isinstance(array, bytearray):
             array = bytes(array)
 
+        # get list from generator (need length)
+        if isinstance(array, types.GeneratorType):
+            array = list(array)
+
+        # make a copy of an existing maparray (possibly at a new size)
+        if isinstance(array, MapArray):
+            array = array.vectors
+
+        # build a MapArray from a MapVector
+        if isinstance(array, MapVector):
+            array = [array]
+
+        # build a MapArray from a bytestring
         if isinstance(array, bytes):
             w = size[0]
             h = size[1]
-            
-            if w * h * 4 != len(bytes):
+
+            if w * h * 4 != len(array):
                 raise ValueError("specified size must match bytes")
-            
-            for y in h:
-                self.vectors.append(MapVector(array[y*w*4:y*w*4+y*w*4]))
-        
+
+            for y in range(h):
+                self.vectors.append(MapVector(array[y*w*4:y*w*4+w*4]))
+
+        # build a MapArray repeating a MapSquare over a w x h space
         elif isinstance(array, tuple):
             w = size[0]
             h = size[1]
 
+            if w == 0 and h == 0:
+                w = 1
+                h = 1
+
             for _ in range(h):
                 self.vectors.append(MapVector(array, w))
 
-        else if isinstance(array, list):
+        elif isinstance(array, list):
+            # build a MapArray from a list of bytestrings
             if isinstance(array[0], bytes):
                 for bts in array:
                     self.vectors.append(MapVector(bts))
+
             else:
+                # force a 2 dimensional array
+                if isinstance(array[0], tuple):
+                    array = [array]
+
                 if size == (0, 0):
                     h = len(array)
                     w = len(array[0])
+                else:
+                    w = size[0]
+                    h = size[1]
+
+                # if the input does not
                 for r in range(h):
-                    vectors.append(MapVector(array[r % len(array)], w))
+                    self.vectors.append(MapVector(array[r % len(array)], w))
+        self.w = self.vectors[0].w
+        self.h = len(self.vectors)
 
     def __repr__(self):
         return("MapArray({})".format(self.vectors))
@@ -286,103 +319,54 @@ class MapArray:
     def __str__(self):
         return("\n".join(str(vec) for vec in self.vectors))
 
+    def __len__(self):
+        return len(self.vectors)
 
-#     def __init__(self, arry, siz=(0, 0)):
-#         """
-#         Construct a new MapArray
-# 
-#         arry:   List of list of MapSquare-like tuples. Can also accept list
-#                 of tuples or just a tuple.
-#         size:   number of rows for a 1 dimensional input or (x,y) dimensions
-#                 for a 2 dimensional input. Size of new MapArray. Elements of
-#                 arry will be repeated or cropped to accomodate this size.
-#         """
-#         arry = _to_nonempty_tuple_array(arry)
-#         if siz == (0, 0):
-#             self.h, self.w = len(arry), len(arry[0])
-#         elif not isinstance(siz, tuple):
-#             self.h, self.w = siz, len(arry[0])
-#         else:
-#             self.w, self.h = siz
-#         if self.h < 1 or self.w < 1:
-#             raise RuntimeError("MapArray cannot have 0 width or height")
-# 
-#         new = [MapVector(arry[i % len(arry)], self.w) for i in range(self.h)]
-#         list.__init__(self, new)
-
-    def __str__(self):
-        """
-        grid of single character representations of MapSquares
-        """
-        return "\n".join(str(row) for row in self)
-
-    def __repr__(self):
-        r = list.__repr__(self)
-        return 'MapArray(%s)' % r
-
-    def __getitem__(self, select):
-        """
-        get square, rows, or subarray with 2d selectors
-
-        select: - If select is a 2-dimensional selector [x,y] returns the
-                MapSquare at the given coordinate location.
-                - If select is a 2-dimensional selector [a,b] where a or b or
-                both are a range, returns a MapArray copy of the given
-                subregion of the array
-                - If select is a 1 dimensional selector (int or range) then
-                __getitem__ behaves as list.__getitem__ and returns reference
-                or list of references to constituent MapVectors
-
-                note maparray[y][x] = maparray[x,y]
-        """
-        if not isinstance(select, tuple):
-            return list.__getitem__(self, select)  # MapVector or [MapVectors]
-
-        c, r = select
-        if not isinstance(r, slice) and not isinstance(c, slice):
-            return list.__getitem__(self, r)[c]  # MapSquare
-        else:
-            c = _n_to_slice(c)
-            r = _n_to_slice(r)
-            return MapArray([row[c] for row in list.__getitem__(self, r)])
-
-    def __setitem__(self, select, arry):
-        """
-        __setitem__     dimension-preserving change to MapArray contents
-
-        select: - If select is a 2-dimensional selector consisting of either
-                coordinates or ranges, replaces MapSquares in-place with the
-                squares in arry. Cropping or repeating arry as needed to
-                preserve dimensions
-
-                - If select is a 1-dimensional selector (row number or range)
-                then the selected rows are reference-replaced with copies to
-                new rows taken from arry. arry may be widened, contracted, or
-                repeated as needed to preserve dimension.
-
-        arry:   A MapArray object with the new squares. A MapVector or
-                MapSquare (or similarly structured object) will be accepted as
-                well.
-        """
-        if not isinstance(select, tuple):
-            select = _n_to_slice(select)
-            ma = MapArray(arry, (self.w, len(self[select])))
-            list.__setitem__(self, select, ma)
+    def __getitem__(self, index):
+        # if index is not a tuple, return vector(s)
+        if not isinstance(index, tuple):
+            return self.vectors[index]
 
         else:
-            arry = _to_nonempty_tuple_array(arry)
-            c, r = select
-            c = _n_to_slice(c)
-            r = _n_to_slice(r)
-            ind = range(len(self))[r]
-            for i in range(len(ind)):
-                self[ind[i]][c] = arry[i % len(arry)]  # with MapVector []=
+            if isinstance(index[1], slice):
+                yi = range(*index[1].indices(len(self.vectors)))
 
-    # TODO: MAKE MORE ROBUST WITH RANGE NOTATION
-    def squares(self, x=0, y=0, w=0, h=0):
-        if (x, y, w, h) == (0, 0, 0, 0):
-            w = self.w
-            h = self.h
-        for r in range(y, y+h):
-            for c in range(x, x+w):
-                yield self[r][c]
+            else:
+                # return MapSquare for [int,int] index
+                if not isinstance(index[0], slice):
+                    return self.vectors[index[1]][index[0]]
+
+                else:
+                    yi = [index[1]]
+            # return sub-MapArray if either index is a range
+            vecs = (MapVector(self.vectors[y][index[0]]) for y in yi)
+            return MapArray(vecs)
+
+    def __setitem__(self, index, target):
+        # if index is not a tuple, operate like a normal list of MapVectors
+        if not isinstance(index, tuple):
+            self.vectors[index] = target
+        else:
+
+            if isinstance(index[1], slice):
+                yi = range(*index[1].indices(len(self.vectors)))
+            else:
+                yi = [index[1]]
+
+            target = MapArray(target)
+            for i in range(len(yi)):
+                pos = i % target.h
+                self.vectors[yi[i]][index[0]] = target[pos]
+
+    # used mainly for "any" and "all" tests
+    def squares(self):
+        ret = []
+        for vec in self.vectors:
+            ret.extend(vec.squares())
+        return ret
+
+    def bytes(self):
+        return b''.join(vec.bytes() for vec in self.vectors)
+
+    def bytelist(self):
+        return [vec.bytes() for vec in self.vectors]
