@@ -494,7 +494,12 @@ def find_exit_passage(engine, x, y, w, h, direction, dice):
     return False, False, False
 
 
-def num_exit_table(die, big):
+def num_exit_table(dice, big, extra=True):
+    if extra is True:
+        die = max(dice)
+    else:
+        die = dice[0]
+
     if big is True:
         if die <= 3:
             return 0
@@ -537,7 +542,7 @@ def exit_wall_table(die, direction):
 def exit_table_11_20(engine, x, y, w, h, direction, num, big, dice):
     engine.log(":: exit_passage")
     if num == -1:
-        num = num_exit_table(dice[0], big)
+        num = num_exit_table(dice, big, engine.extra_branch)
 
     e_dir = exit_wall_table(dice[1], direction)
     x0, y0, width = find_exit_passage(engine, x, y, w, h, e_dir, dice)
@@ -558,7 +563,7 @@ def exit_table_11_20(engine, x, y, w, h, direction, num, big, dice):
 def exit_door(engine, x, y, w, h, direction, num, big, dice):
     engine.log(":: exit_door")
     if num == -1:
-        num = num_exit_table(dice[0], big)
+        num = num_exit_table(dice, big, engine.extra_branch)
         engine.log("\tnum rolled = {}".format(num))
 
     e_dir = exit_wall_table(dice[1], direction)
@@ -604,7 +609,7 @@ def dispatch_exit(engine, element, dice):
 def describe_chamber(engine, d):
     dice = engine.roll([100, 100])
     chamber_type = general_chamber(dice[0])
-    ret = "<p>A {} foot by {} foot {}.</p>".\
+    ret = "<p><b>A {} foot by {} foot {}.</b></p>".\
           format(d['w'], d['h'], chamber_type)
     contents = chamber_contents(engine, dice[1])
     ret += contents
@@ -625,9 +630,9 @@ def chamber_contents(engine, die=0):
         return "<p>monsters: {} guarding {}.</p>".format(
                 chamber_monster(engine), which_treasure(engine))
     elif die <= 42:
-        return "<p>monsters: {}.</p>"
+        return "<p>monsters: {}.</p>".format(chamber_monster(engine))
     elif die <= 50:
-        return "<p>monsters {} with {}.</p>".format(
+        return "<p>monsters: {} with {}.</p>".format(
                 chamber_monster(engine), which_treasure(engine))
     elif die <= 58:
         return "<p>" + chamber_hazard() + " and " + treasure(engine) + "</p>"
@@ -674,6 +679,8 @@ def chamber_trick():
 
 def chamber_monster(engine):
     dice = engine.roll([100, 20])
+    die = dice[0]
+
     if die <= 1:
         return "1 mind flayer arcanist"
     elif die <= 2:

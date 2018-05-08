@@ -1,5 +1,28 @@
 body {
     font-size: 20px;
+    background-image: url('/static/barbarian.jpg');
+    background-size: cover;
+    overflow: hidden;
+}
+
+.status-box {
+    width: 300px;
+    height: 100px;
+    position: absolute;
+    top: 300px;
+    left: 300px;
+    background-color: #6c91b6;
+    z-index: 0;
+    border: solid #333 10px;
+}
+
+.status-box #status {
+    margin: 70px;
+    font-family: Georgia;
+    font-size: 60px;
+    font-weight: bold;
+    color: white;
+    top: 40px;
 }
 
 .option-box {
@@ -11,6 +34,7 @@ body {
         background-color: white;
         border: solid red 0px 2px 2px 0px;
         padding: 0px;
+        z-index: 20;
 }
 
 .option-box h2 {
@@ -20,29 +44,46 @@ body {
 
 .flavor-town {
         position: absolute;
-        top: 40px;
+        font-family: Georgia;
+        font-size: 25px;
+        top: 70px;
         right: 0px;
         width: 300px;
-        background-color: #bbb;
-        border: solid red 0px 0px 2px 2px;
+        background-color: #6c91b6;
+        color: white;
+        border-left: solid #333 10px; !important;
         padding: 20px;
+        z-index: 20;
+}
+
+.flavor-town b {
+    font-size: 30px;
+    color: #b6e9fa; 
 }
 
 .header {
-    background-color: #222;
-    height: 40px;
+    background-color: #000;
+    height: 70px;
     position: absolute;
     left: 0px;
     top: 0px;
     width: 100%;
     color: white;
+    z-index: 20;
 }
 
-.header h1 {
-    font-size: 14px;
+.header img {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+.header h2 {
+    font-size: 20px;
     display: inline-block;
     padding: 0px;
     margin: 0px;
+    float: right;
 }
 
 .header ul {
@@ -59,21 +100,36 @@ body {
 }
 
 a {
-    color: red
+    color: red;
 }
 
 .option-box {
-    position:
+    background-color: #6c91b6;
+    color: white;
+    position: absolute;
+    right: 0px;
+    width: 300px;
+    padding: 20px;
+    border-left: solid #333 10px;
+    z-index: 20;
+}
+
+.option-box fieldset {
+    position: absolute;
+    bottom: 40px;
+    left: 40px;
+    border: solid #b6e9fa 5px;
 }
 
 .canvas-container {
     position: absolute;
     left: 0px;
     top: 0px;
+    z-index: 10;
 }
 
 #display {
     position: absolute;
     left: 0px;
-    top: 40px;
+    bottom: 0px;
 }

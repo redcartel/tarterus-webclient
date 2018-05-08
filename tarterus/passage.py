@@ -513,4 +513,4 @@ pillars down the middle.".format(d['w']))
                     format(d['w']))
         elif die <= 4:
             return ("A {} ft. wide passage with 20 ft. high ceileings and a\
-gallery 10 ft. up with access to the above level.")
+gallery 10 ft. up with access to the above level.".format(d['w']))

@@ -28,8 +28,11 @@ def start_table_1(engine, origin, dice):
     layout[7, 4:6] = ('open', 5)
     layout[4:6, 7] = ('open', 5)
     layout[3:7, 3:7] = ('room', 5)
+    layout[5, 5] = ('stup', 5)
     w = 10
     h = 10
+    if origin not in ['n', 'e', 's', 'w', 'm']:
+        origin = 'm'
     if origin == 'n':
         x = engine.maparray.w // 2 - w // 2
         y = 0
@@ -80,8 +83,11 @@ def start_table_1(engine, origin, dice):
 def start_table_2(engine, origin, dice):
     engine.log(":: start_table_2")
     layout = room(6, 6, ('room', 1))
+    layout[3, 3] = ('stup', 1)
     w = 6
     h = 6
+    if origin not in ['n', 'e', 's', 'w', 'm']:
+        origin = 'm'
     if origin == 'n':
         d = 'n'
         x = engine.maparray.w // 2 - w // 2

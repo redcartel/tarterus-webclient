@@ -1,7 +1,19 @@
 /*jshint esversion: 6*/
-//TODO: order functions in a sane way
-//
 
+// XHR doesn't seem to work in a jquery wrapper:
+var tartarusDownloadMapBytes = function(id, callback) {
+    console.log("getMapBinary");
+
+    var oReq = new XMLHttpRequest();
+    oReq.open("GET", "/static/" + id + "/" + id + ".map", true);
+    oReq.responseType = "arraybuffer";
+    oReq.onload = function(oEvent) {
+        console.log("gMB loaded");
+        var arrayBuffer = oReq.response;
+        callback(new Uint8Array(arrayBuffer));
+    };
+    oReq.send();
+};
 
 (function() {
     "use strict";
@@ -19,22 +31,39 @@
         drag_start_y: null,
         drag_start_xoffset: null,
         drag_start_yoffset: null,
+        selected_room: 0,
+        to_draw: false,
         tiles_src: "static/resources/tilemap.png",
-	    tileImg: {
-		    'void' : [464, 320],
-		    'vwal' : [480, 320],
-		    'hwal' : [496, 320],
-		    'room' : [128, 336],
-		    'hall' : [144, 336 + tile_offset],
-		    'tcor' : [512, 320],
-		    'bcor' : [560, 320],
-		    'door' : [64,  336],
-		    'sdwn' : [192, 336],
-		    'stup' : [176, 336],
-            'errr' : [0,0],
-            'open' : [16, 336 + tile_offset]
-	    },
-        tileNum: ['void', 'vwal', 'hwal', 'room', 'hall', 'tcor', 'bcor', 'door', 'sdown', 'stup',  'errr', 'open']
+	    tileImg: [
+		    [464, 320], // void
+		    [480, 320], // vwal
+		    [496, 320], // hwal
+		    [128, 336], // room
+		    [144, 336 + tile_offset], // hall
+		    [512, 320], // tcor
+		    [560, 320], // bcor
+		    [64,  336], // door
+		    [192, 336], // sdwn
+		    [176, 336], // stup
+            [0,0], // err
+            [16, 336 + tile_offset] // open
+        ],
+	    highlightTileImg: [
+		    [464, 320], // void
+		    [480, 320 + 2 * tile_offset], // vwal
+		    [496, 320 + 2 * tile_offset], // hwal
+		    [128, 336 + 2 * tile_offset], // room
+		    [144, 336 + 2 * tile_offset], // hall
+		    [512, 320 + 2 * tile_offset], // tcor
+		    [560, 320 + 2 * tile_offset], // bcor
+		    [64,  336 + 2 * tile_offset], // door
+		    [192, 336 + 2 * tile_offset], // sdwn
+		    [176, 336 + 2 * tile_offset], // stup
+            [0,0], // err
+            [16, 336 + 2 * tile_offset] // open
+        ],
+
+
 	};
 
     var dims = {
@@ -75,9 +104,18 @@
         $(".flavor-town").height(window.innerHeight - $(".header").height() - $(".option-box").height());
     };
 
-    var drawTile = function(x, y, tile) {
-        var tileCoords = globals.tileImg[globals.tileNum[tile]];
-        globals.ctx.drawImage(globals.tiles, tileCoords[0], tileCoords[1], 16, 16, x*16, y*16, 16, 16);
+    var drawTile = function(x, y, tile, highlight) {
+        if (globals.to_draw) {
+            var tileCoords = globals.tileImg[tile];
+            if (highlight == true) {
+                tileCoords = globals.highlightTileImg[tile];
+            }
+            globals.ctx.drawImage(globals.tiles, tileCoords[0], tileCoords[1], 16, 16, x*16, y*16, 16, 16);
+        }
+    };
+
+    var clearCanvas = function() {
+        globals.ctx.clearRect(0, 0, $("#display").width(), $("#display").height());
     };
 
     var draw = function() {
@@ -93,7 +131,12 @@
                     drawTile(x, y, 11);
                 }
                 else {
-                    drawTile(x, y, globals.map[x + dims.xoffset][y + dims.yoffset]);
+                    var rNum = globals.section_map[y + dims.yoffset][x + dims.xoffset];
+                    var highlight = false;
+                    if (rNum == globals.selected_room) {
+                        highlight = true;
+                    }
+                    drawTile(x, y, globals.map[y + dims.yoffset][x + dims.xoffset], highlight);
                 }
             }
         }
@@ -104,37 +147,136 @@
         if (x < 0 || x >= dims.mw || y < 0 || y >= dims.mh) {
             return;
         }
-            var number = globals.section_map[x][y];
+            var number = globals.section_map[y][x];
+            globals.selected_room = number;
             console.log(globals.room_list[number]);
             var htmlContent = globals.room_list[number].description;
-            htmlContent = "<li class='roomNumber'>" + number + "</li>" + htmlContent;
+            htmlContent = htmlContent;
             $("#description").html(htmlContent);
+            draw();
         // }
     };
 
+    var genMap = function(w, h, e="m", level=5) {
+        globals.to_draw = false;
+        clearCanvas();
+        var tries = 0;
+        var getMapLoadUpdate = function(id) {
+            var request = new XMLHttpRequest();
+            var updateUrl = "/static/" + id + "/" + id + ".update";
+                $.ajax({
+                    'async': true,
+                    'global': false,
+                    'url': updateUrl,
+                    'datatype': 'text',
+                    'cache': false,
+                    'success': function(data) {
+                        if (data != "") {
+                            $("#status").html(data);
+                        }
+                        if(data == 'done') {
+                            getMapBinary(id);
+                            getMapJson(id);
+                        }
+                        else {
+                            setTimeout(function() {
+                                getMapLoadUpdate(id);
+                            }, 500);
+                        }
+                    },
+                    'error': function(data, errorStatus, errorThrown) {
+                        console.log(errorThrown + " : " + errorStatus);
+                        tries += 1;
+                        if (tries < 10) {
+                            setTimeout(function() {
+                                getMapLoadUpdate(id);
+                            });
+                        }
+                    }
+                });
+                /*
+                $("description").html(responseText);
+                if (response == "done") {
+                    getMapBinary(id);
+                    getMapJson(id);
+                }
+                else {
+                    getMapLoadUpdate(id);
+                }
+                */
+            };
 
-    var genMap = function(w, h, typ, ent="s", level=1) {
-        var mapUrl = '/get_map?w=' + w + '&h=' + h + '&t=' + typ + '&e=' + ent + '&l=' + level;
+        globals.gotBinary = false;
+        globals.gotJson = false;
+        
+        var mapUrl = '/get_bin_map?w=' + w + '&h=' + h + '&e=' + e;
         $.ajax({
             'async': true,
             'global': false,
-            'url': mapUrl, 
+            'url': mapUrl,
             'dataType': 'json',
             'success': function(data) {
-                globals.map = data.mp;
-                globals.section_map = data.rnums;
-                globals.room_list = data.rlist;
-                dims.mw = globals.map.length;
-                dims.mh = globals.map[0].length;
-                size_canvas();
-                draw();
-            },
-            'error': function() {
-                console.error('! - could not load json map data'); 
+                console.log(data);
+                var id = data.id;
+                getMapLoadUpdate(id);
             }
         });
     };
 
+    var getMapBinary = function(id) {
+        console.log("getMapBinary");
+        tartarusDownloadMapBytes(id, function(data) {
+            globals.mapByteArray = data;
+            globals.gotBinary = true;
+            loadNewMap();
+        });
+    };
+
+    var getMapJson = function(id) {
+        console.log("getMapJson");
+        $.ajax({
+            'async': true,
+            'global': false,
+            'url': "/static/"+id+"/"+id+".json",
+            'dataType': 'json',
+            'success': function(data) {
+                console.log("gMJ success");
+                globals.mapDictionary = data;
+                globals.gotJson = true;
+                loadNewMap();
+            }
+        });
+    };
+
+    var loadNewMap = function() {
+        if (globals.gotJson == true && globals.gotBinary == true) {
+            globals.mapSquares = [];
+            globals.roomNumbers = [];
+            var w = globals.mapDictionary.w;
+            var h = globals.mapDictionary.h;
+            var x, y;
+            for (y = 0; y < h; y++) {
+                globals.mapSquares.push([]);
+                globals.roomNumbers.push([]);
+                for (x = 0; x < w; x++) {
+                    var pos = (y * w * 4) + (x * 4);
+                    globals.mapSquares[y].push(globals.mapByteArray[pos]);
+                    var b3 = globals.mapByteArray[pos+1];
+                    var b2 = globals.mapByteArray[pos+2];
+                    var b1 = globals.mapByteArray[pos+3];
+                    globals.roomNumbers[y].push(b1 + b2 * 256 + b3 * 256 * 256);
+                }
+            }
+            globals.map = globals.mapSquares;
+            globals.section_map = globals.roomNumbers;
+            globals.room_list = globals.mapDictionary.descriptions;
+            dims.mw = w;
+            dims.mh = h;
+            size_canvas();
+            globals.to_draw = true;
+            draw();
+        }
+    };
 
     // TODO: refactor this
     $(document).ready(function() {
@@ -149,7 +291,9 @@
         $(globals.tiles).on('load', function() {
             tile_d.resolve();
         });
-        var mapUrl = '/default_room?w=' + dims.cw + '&h=' + dims.ch;
+        genMap(100, 100, "m", 5);
+        registerMouseEvents();
+        /*var mapUrl = '/default_room?w=' + dims.cw + '&h=' + dims.ch;
         $.ajax({
             'async': true,
             'global': false,
@@ -178,6 +322,7 @@
             }
             registerMouseEvents();
         });
+        */
     });
 
     var registerMouseEvents = function() {
@@ -197,8 +342,7 @@
             var val = $("#size").val();
             var w = val.match(re)[0];
             var h = val.match(re)[1];
-            var tval = $("#type").val();
-            genMap(w,h,tval);
+            genMap(w,h,'m',5);
         });
 
         $("canvas").click(function(e) {

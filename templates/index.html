@@ -8,7 +8,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Tarterus</title>
+    <title>Tartarus.sh - Dungeon Generation for 5th Edition D&D</title>
 
     <!-- Bootstrap core CSS -->
     <!-- <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet"> -->
@@ -20,16 +20,15 @@
   </head>
 
   <body>
+        <div class="status-box">
+            <span id="status">
+        </div>
         <span id="canvas-container">    
             <canvas id="display">
         </span>
         <div class="header catch-click">
-            <h1>Tarterus</h1>
-            <ul>
-                <li><a href="/username">username</a></li>
-                <li><a href="/maps">maps</a></li>
-                <li><a href="/about">about</a></li>
-            </ul>
+            <img src="/static/logo.png">
+            <h2>&copy;2018, Carter Adams</h2>
         </div>
         <div class="option-box catch-click">
             <h2>Generation Options</h2>
@@ -42,9 +41,10 @@
                         <option value="100x50" selected>500ft x 250ft</option>
                         <option value="100x100">500ft x 500ft</option>
                         <option value="200x200">1000ft x 1000ft</option>
-                        <option value="500x500">2500ft x 2500ft</option>
-                        <option value="1056x1056">one mile x one mile</option>
+                        <!--<option value="500x500">2500ft x 2500ft</option>
+                        <option value="1056x1056">one mile x one mile</option> -->
                     </select>
+                    <!--
                     <select id="entrance" name="entrance">
                         <option value="n">North</option>
                         <option value="e">East</option>
@@ -79,6 +79,7 @@
                         <option value="hall_test" selected>hall test</option>
                         <option value="splash">splash</option>
                     </select>
+                    -->
                     <input type="button" id="generate" value="generate">
                 </fieldset>
             </form>

@@ -1,6 +1,11 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_file
 # import json
-from tarterus.mapgen import fetch_map, gen_splash
+from tarterus.mapgen import fetch_map  # , gen_splash
+from tarterus.engine import Engine
+import json
+from random import getrandbits
+import subprocess
+
 app = Flask("__name__")
 
 
@@ -14,6 +19,26 @@ def randmap(w,h):
 def index():
     return render_template("index.html")
 
+
+@app.route("/get_bin_map")
+def bin_map():
+    w = request.args.get('w', '128');
+    w = int(w)
+    h = request.args.get('h', '128');
+    h = int(h)
+    e = request.args.get('e', 'm');
+    e = str(e)[0]
+    idnum = "%032x" % getrandbits(128);
+    subprocess.Popen(["python3", "spawnmap.py", 
+                      idnum, str(w), str(h), str(3)]);
+    return(json.dumps({'id': idnum}))
+    
+
+
+
+@app.route("/b")
+def b():
+    return render_template("bintest.html")
 
 @app.route("/big_room")
 def big_room():
@@ -60,6 +85,18 @@ def dmg_map():
     l = int(l)
     return fetch_map(w, h, "default", {'entrance': e, 'level': l})
 
+@app.route("/bytes")
+def bytes_map():
+    w = request.args.get('w', '128')
+    w = int(w)
+    h = request.args.get('h', '128')
+    h = int(h)
+    bites = fetch_map(w, h, "binary_test")
+    return send_file(
+                     bites, 
+                     attachment_filename="mapdata.oct",
+                     mimetype="application/octet-stream"
+                     )
 
 @app.route("/jsontest")
 def test():

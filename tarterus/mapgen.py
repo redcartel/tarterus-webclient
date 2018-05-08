@@ -2,6 +2,7 @@ from tarterus.maparray import MapArray  # , MapSquare
 from random import randint
 import json
 from tarterus.engine import Engine
+import io
 
 LOG = ""
 
@@ -294,6 +295,13 @@ def fetch_map(w, h, typ="default"):
         maparray = e.maparray
         e.process_descriptions()
         roomlist = e.descriptions
+    if typ == "binary_test":
+        e = Engine({"w": w, "h": h, "pop_mode": "random"})
+        e.add(["start", {"origin": "m"}])
+        e.gen_map()
+        return io.BytesIO(e.maparray.bytes())
+
+
     if typ == "splash":
         maparray, roomlist = gen_splash(w, h)
     add_log("fetch_map")

@@ -20,6 +20,10 @@ class Level():
     def setdict(self, dictionary):
         self.file_obj['dictionary'] = dictionary
 
+    def writebytes(self, filename):
+        with open(filename, "wb") as f:
+            self.file_obj
+
     def write(self, filename):
         with open(filename, 'wb') as outfile:
             pickle.dump(self.file_obj, outfile)

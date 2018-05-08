@@ -46,6 +46,7 @@ class Engine():
         n = t[1]
         if n == -1:
             n = len(self.descriptions)
+
         if n >= len(self.descriptions):
             for _ in range(len(self.descriptions), n+1):
                 self.descriptions.append({'num': n})
@@ -82,6 +83,7 @@ class Engine():
 # does not do anything yet
         self.max_steps = self.params.get("max_steps", -1)
         self.log("::Parameters Loaded\n\t{}".format(self.params))
+        self.extra_branch = self.params.get("extra_branch", False)
 
     # Coroutine generator. At each step returns the length of pending.
     # .__next__() will iterate the generation by popping an element from
@@ -122,6 +124,46 @@ class Engine():
         for ndispatches in the_engine:
             if ndispatches == 0:
                 break
+
+#     def gen_map_with_status(self, filename):
+#         the_engine = self.the_engine()
+#         next(the_engine)
+#         for ndispatches in the_engine:
+#             if randint(1, 10) == 10:
+#                 with open(filename, 'w') as f:
+#                     f.write(str(len(self.descriptions)))
+#             if ndispatches == 0:
+#                 break
+#         with open(filename, 'w') as f:
+#             f.write("done")
+#
+    def gen_map_files(self, mapfile, jsonfile, statusfile):
+        the_engine = self.the_engine()
+        next(the_engine)
+        for ndispatches in the_engine:
+            if randint(1, 20) == 20:
+                with open(statusfile, 'w') as f:
+                    f.write(str(len(self.descriptions)))
+            if ndispatches == 0:
+                break
+
+        with open(statusfile, "w") as f:
+            f.write("populating rooms")
+
+        self.process_descriptions()
+
+        with open(mapfile, "wb") as f:
+            f.write(self.maparray.bytes())
+
+        with open(jsonfile, "w") as f:
+            json.dump({
+                "w": self.w,
+                "h": self.h,
+                "descriptions": self.descriptions
+            }, f)
+
+        with open(statusfile, "w") as f:
+            f.write("done")
 
     # iterate map generation one step with no command
     def step(self):
