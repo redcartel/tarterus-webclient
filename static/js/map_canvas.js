@@ -5,7 +5,7 @@ var tartarusDownloadMapBytes = function(id, callback) {
     console.log("getMapBinary");
 
     var oReq = new XMLHttpRequest();
-    oReq.open("GET", "/static/" + id + "/" + id + ".map", true);
+    oReq.open("GET", "/static/tmp/" + id + "/" + id + ".map", true);
     oReq.responseType = "arraybuffer";
     oReq.onload = function(oEvent) {
         console.log("gMB loaded");
@@ -163,7 +163,7 @@ var tartarusDownloadMapBytes = function(id, callback) {
         var tries = 0;
         var getMapLoadUpdate = function(id) {
             var request = new XMLHttpRequest();
-            var updateUrl = "/static/" + id + "/" + id + ".update";
+            var updateUrl = "/static/tmp/" + id + "/" + id + ".update";
                 $.ajax({
                     'async': true,
                     'global': false,
@@ -237,7 +237,7 @@ var tartarusDownloadMapBytes = function(id, callback) {
         $.ajax({
             'async': true,
             'global': false,
-            'url': "/static/"+id+"/"+id+".json",
+            'url': "/static/tmp/"+id+"/"+id+".json",
             'dataType': 'json',
             'success': function(data) {
                 console.log("gMJ success");

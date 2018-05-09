@@ -5,3 +5,4 @@ tarterus/__pycache__
 *.pyc
 o.txt
 tmp
+static/tmp/*

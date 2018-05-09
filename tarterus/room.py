@@ -615,66 +615,290 @@ def describe_chamber(engine, d):
     ret += contents
     return ret
 
-
+# Build new chart for types of monsters (primary inhabitant etc.)?
 def chamber_contents(engine, die=0):
     die = engine.roll([100])[0]
-    if die <= 8:
-        return "<p>monsters: " + chamber_monster(engine) + "</p>"
-    elif die <= 15:
-        return "<p>monsters: {} with {}.</p>".format(
-                chamber_monster(engine), which_treasure(engine))
-    elif die <= 27:
-        return "<p>monsters: {}.</p>".format(
-                chamber_monster(engine))
-    elif die <= 33:
-        return "<p>monsters: {} guarding {}.</p>".format(
-                chamber_monster(engine), which_treasure(engine))
-    elif die <= 42:
-        return "<p>monsters: {}.</p>".format(chamber_monster(engine))
-    elif die <= 50:
-        return "<p>monsters: {} with {}.</p>".format(
-                chamber_monster(engine), which_treasure(engine))
-    elif die <= 58:
-        return "<p>" + chamber_hazard() + " and " + treasure(engine) + "</p>"
-    elif die <= 63:
-        return "<p>" + chamber_obstacle() + "</p>"
-    elif die <= 73:
-        return "<p>" + chamber_trap() + "</p>"
-    elif die <= 76:
-        return "<p>" + chamber_trap() + " protecting " +\
-                which_treasure(engine) + "</p>"
-    elif die <= 80:
-        return "<p>" + chamber_trick() + "</p>"
-    elif die <= 88:
-        return "<p> This is an otherwise empty room </p>"
-    elif die <= 94:
-        return "<p>" + chamber_hazard() + "</p>"
-    elif die <= 100:
-        return "<p>" + which_treasure(engine) + "</p>"
+    die = 74
+    a, b = "", ""
+    try:
+        if die <= 8:
+            return "<p>monsters: " + chamber_monster(engine) + "</p>"
+        elif die <= 15:
+            return "<p>monsters: {} with {}.</p>".format(
+                    chamber_monster(engine), which_treasure(engine))
+        elif die <= 27:
+            return "<p>monsters: {}.</p>".format(
+                    chamber_monster(engine))
+        elif die <= 33:
+            return "<p>monsters: {} guarding {}.</p>".format(
+                    chamber_monster(engine), which_treasure(engine))
+        elif die <= 42:
+            return "<p>monsters: {}.</p>".format(chamber_monster(engine))
+        elif die <= 50:
+            return "<p>monsters: {} with {}.</p>".format(
+                    chamber_monster(engine), which_treasure(engine))
+        elif die <= 58:
+            return "<p>" + chamber_hazard(engine) + " and " + treasure(engine) + "</p>"
+        elif die <= 63:
+            return "<p>" + chamber_obstacle(engine) + "</p>"
+        elif die <= 73:
+            return "<p>" + chamber_trap(engine) + "</p>"
+        elif die <= 76:
+            a = chamber_trap(engine)
+            if a is None:
+                raise RuntimeError("None trap!")
+            b = which_treasure(engine)
+            return "<p>" + a + " protecting " +\
+                    b + "</p>"
+        elif die <= 80:
+            return "<p>" + chamber_trick(engine) + "</p>"
+        elif die <= 88:
+            return "<p> This is an otherwise empty room </p>"
+        elif die <= 94:
+            return "<p>" + chamber_hazard(engine) + "</p>"
+        elif die <= 100:
+            return "<p>" + which_treasure(engine) + "</p>"
+    except Exception as e:
+        raise RuntimeError("describe chamber ({}, {}) with die roll {} raised {}".format(a, b, die, e))
 
+
+def chamber_trick(engine):
+    return "a trick!"
 
 def which_treasure(engine):
     dice = engine.roll([20])
-    if dice[0] <= 18:
-        return treasure(engine)
-    elif dice[0] <= 20:
-        return horde(engine)
+    try:
+        if dice[0] <= 18:
+            return treasure(engine)
+        elif dice[0] <= 20:
+            return horde(engine)
+    except Exception as e:
+        raise RuntimeError("which_treasure with dice {} threw {}".format(dice, e))
 
 
-def chamber_hazard():
+def chamber_hazard(engine):
     return "a hazard!"
 
 
-def chamber_obstacle():
+def chamber_obstacle(engine):
     return "an obstacle!"
 
 
-def chamber_trap():
-    return "a trap!"
+def chamber_trap(engine):
+    ret = ""
+    dice = engine.roll([6, 6, 100])
 
-
-def chamber_trick():
-    return "a trick!"
+    try:
+       if dice[1] <= 2:
+           damage = "1d10"
+           dc = 9 + engine.roll([2])[0]
+           bonus = 2 + engine.roll([3])[0]
+       elif dice[1] <= 5:
+           damage = "2d10"
+           dc = 11 + engine.roll([4])[0]
+           bonus = 15 + engine.roll([5])[0]
+       elif dice[1] <= 6:
+           damage = "3d10"
+           dc = 15 + engine.roll([5])[0]
+           bonus = 8 + engine.roll([4])[0]
+   
+       ret += "There is a trap, the DC to spot & disarm it is {}. ".format(dc)
+   
+       if dice[0] <= 1:
+           ret += "An area of the floor is trapped: "
+       elif dice[0] <= 2:
+           ret += "A door or hallway has a trap triggered by moving through it: "
+       elif dice[0] <= 3:
+           ret += "A doorknob or statue is has a trap triggered by\
+    touching it: "
+       elif dice[0] <= 4:
+           die2 = engine.roll([2])[0]
+           if die2 <= 1:
+               ret += "There is a trapped treaure chest: "
+           elif die2 <= 2:
+               ret += "There is a trapped door triggered by opening it (if no\
+    no door, there is a trapped treasure chest): "
+       elif dice[0] <= 5:
+           die2 = engine.roll([2])[0]
+           if die2 <= 1:
+               ret += "There is a mural, looking at it triggers a trap: "
+           elif die2 <= 2:
+               ret += "There is an arcane symbol, looking at it triggers a trap: "
+       elif dice[0] <= 6:
+           ret += "An object in the room that triggers a trap when it is moved: "
+       
+       if dice[2] <= 4:
+           ret += "Magic missiles fire out, doing {} damage.".format(damage)
+       elif dice[2] <= 7:
+           ret += "A collapsing floor deposits the characters into a\
+   pit. DC {} Dex save to avoid {} damage.".format(dc, damage)
+       elif dice[2] <= 10:
+           die2 = engine.roll([2])[0]
+           if die2 <= 1:
+               ret += "A ceiling block falls,\
+   DC {} Dex save to avoid {} damage".format(dc, damage)
+           elif die2 <= 2:
+               ret += "The entire ceiling collapses, dealing {} damage.\
+   ".format(damage)
+       elif dice[2] <= 12:
+           ret += "The doors lock, the passages close and the ceiling lowers,\
+    doing {} damage if the players cannot escape. DC to pick locks or break doors\
+    is {}".format(damage, dc)
+       elif dice[2] <= 14:
+           ret += "A chute opens in the floor, DC {} Dex save to avoid going down\
+    to a lower level.".format(dc)
+       elif dice[2] <= 16:
+           ret += "A clanging noise alerts monsters in all rooms connected to\
+   this room or at the end of halls connected to this room."
+       elif dice[2] <= 19:
+           ret += "A disintegrate spell is triggered. Spell save DC is {} and the\
+    spell does {} damage.".format(dc, damage)
+       elif dice[2] <= 23:
+           ret += "There is a contact poison or acid. Make a DC {} Con save or\
+    take {} damage.".format(dc, damage)
+       elif dice[2] <= 27:
+           ret += "Fire shoots out. Take {} damage or half that much with a DC {}\
+    Dex save.".format(damage, dc)
+       elif dice[2] <= 30:
+           ret += "The spell 'Flesh to Stone' is triggered. The spell save DC is\
+    {}.".format(dc)
+       elif dice[2] <= 33:
+           die2 = engine.roll([2])[0]
+           if die2 <= 1:
+               ret += "The floor collapses. Make a DC {} Dex save or fall in and\
+    take {} damage."
+           elif die2 <= 2:
+               ret += "The floor is (or becomes) an illusion. Make a DC {} Int\
+    save or you fail to see it and fall, taking {} damage.".format(dc, damage)
+       elif dice[2] <= 36:
+           die2 = engine.roll([6])[0]
+           if die2 <= 1:
+               ret += "A vent releases blinding gas. Everyone in the room make a\
+    DC {} Con save or become blinded. Reroll the save at the end of each round.\
+   ".format(dc)
+           elif die2 <= 2:
+               ret += "A vent releases acidic gas. Everyone in the room make a DC\
+    {} Con save or take {} damage.".format(dc, damage)
+           elif die2 <= 3:
+               ret += "A vent releases obscuring gas. Everything in the room\
+    is heavily obscured. Creatures without blindsense or similar make attack\
+    rolls with disadvantage."
+           elif die2 <= 4:
+               ret += "A vent releases paralyzing gas. Everyone in the room\
+    make a DC {} Con save or become paralyzed. Reroll the save at the end of each\
+    round.".format(dc)
+           elif die2 <= 5:
+               ret += "A vent releases poisonous gas. Everyone in the room\
+    make a DC {} Con save or take {} damage and gain the poisoned condition until\
+    your next long rest.".format(dc, damage)
+           elif die2 <= 6:
+               ret += "A vent release sleep gas. Everyone in the room make a DC\
+    {} Con save or fall asleep until shaken awake.".format(dc)
+       elif dice[2] <= 39:
+           ret += "The floor is electrified. Take {} damage or half as much\
+    with a DC {} Dex save.".format(damage, dc)
+       elif dice[2] <= 43:
+           ret += "There is a 'Glyph of Warding' spell on the triggering object\
+    the spell save DC is {}.".format(dc)
+       elif dice[2] <= 46:
+           ret += "A huge wheeled statue rolls down a corridor, everyone in its\
+    path make a DC {} Dex save or take {} damage and be knocked prone.\
+   ".format(dc, damage)
+       elif dice[2] <= 49:
+           ret += "A lightning bolt shoots from the wall. Take {} damage or half\
+    that with a DC {} Dex save.".format(damage, dc)
+       elif dice[2] <= 52:
+           die2 = engine.roll([2])[0]
+           if die2 <= 1:
+               ret += "The doors lock, the passages close, and the room fills with water.\
+    DC to pick locks or break a doors is {}. After the first try to pick a lock\
+    or lift a door, the doors are underwater and creatures without a swim speed\
+    make checks at disadvantage.".format(dc)
+           if die2 <= 2:
+               ret += "The doors lock, the passages close, and the room fills\
+    with acid. The acid does {} damage per round. The DC to pick locks or break\
+    doors is {}. After the first try to pick a lock or break a door, the doors\
+    are submerged and creatures without a swim speed make checks with\
+    disadvantage.".format(damage, dc)
+       elif dice[2] <= 56:
+               ret += "The trap attacks with darts. The attack bonus is {} and\
+    the darts do {} damage.".format(bonus, damage)
+       elif dice[2] <= 59:
+           die2 = engine.roll([3])[0]
+           if die2 <= 1:
+               ret += "A weapon in the room becomes an Animated Object."
+           elif die2 <= 2:
+               ret += "A suit of armor in the room becomes an Animated\
+   Object."
+           elif die2 <= 3:
+               ret += "A rug in the room becomes an Animated Object."
+       elif dice[2] <= 62:
+           ret += "A blade swings across the room or hall, dealing {} damage to\
+    anyone in its path failing a DC {} Dex save.".format(damage, dc)
+       elif dice[2] <= 67:
+           die2 = engine.roll([8])[0]
+           ret += "A hidden pit opens. Make a DC {} save to avoid falling in and\
+    taking {} damage.".format(dc, damage)
+           if die2 <= 6:
+               pass
+           elif die2 <= 7:
+               ret += " there is a Black Pudding at the bottom of the pit."
+           elif die2 <= 8:
+               ret += " there is a Gelatinous Cube at the bottom of the pit."
+       elif dice[2] <= 70:
+           ret += "A hidden pit opens. Make a DC {} save or fall in taking half\
+    of {} damage. After each failed attempt to climb out or otherwise escape\
+    (DC is also {}) take {} damage.".format(dc, damage, dc, damage)
+       elif dice[2] <= 73:
+           ret += "A shallow pit opens up. Make a DC {} save to avoid falling in\
+    the pit closes and locks and fills with water. The DC to pick the lock is {}.\
+   ".format(dc, dc)
+       elif dice[2] <= 77:
+           ret += "A scithing blade attacks with a bonus of {} doing {} damage.\
+   ".format(bonus, damage)
+       elif dice[2] <= 81:
+           die2 = engine.roll([2])[0]
+           if die2 <= 1:
+               ret += "A spear attacks with a bonus of {} doing 1d8 damage.\
+".format(bonus)
+           elif die2 <= 2:
+               ret += "A spear attacks with a bonus of {} doing 1d8 damage. If\
+    you are hit, make a DC {} Con save or become poisoned and take {} damage.\
+   ".format(bonus, dc, damage)
+       elif dice[2] <= 84:
+           ret += "The floor collapses onto spikes. Make a DC {} Dex save to\
+    avoid {} damage.".format(dc, damage)
+       elif dice[2] <= 88:
+           die2 = engine.roll([2])[0]
+           if die2 <= 1:
+               ret += "A Thunderwave spell (DC {}) pushes players into spiked walls\
+    doing {} damage.".format(dc, damage)
+           elif die2 <= 2:
+               ret += "A Thunderwave spell (DC {}) pushes players into a pit for\
+    {} damage.".format(dc, damage)
+       elif dice[2] <= 91:
+           die2 = engine.roll([2])[0]
+           if die2 <= 1:
+               ret += "Steel "
+           elif die2 <= 2:
+               ret += "Stone "
+           ret += "jaws restrain a a character. The Strength check to get out has\
+    a DC of {}.".format(dc)
+       elif dice[2] <= 94:
+           ret += "A stone block smashes across the room or hallway. Make a DC\
+   {} Dex save or take {} damage.".format(dc, damage)
+       elif dice[2] <= 97:
+           ret += "There is a Symbol spell. Spell save DC is {}.".format(dc)
+       elif dice[2] <= 100:
+           ret += "The doors lock and the passages close and the walls slide\
+    together crushing the characters. The walls do {} damage to the players and\
+    the DC of any ability check related to the trap is {}.".format(damage, dc)
+    except Exception as e:
+        raise RuntimeError("trap error with dice {} raising {}".format(dice, e))
+    
+    if ret is None:
+        return "NONE TRAP DIE={}".format(dice[2])
+    return ret
 
 
 def chamber_monster(engine):
@@ -948,6 +1172,8 @@ from the ceiling"
         return "1 mind flayer"
     elif die <= 100:
         return "1 spirit naga"
+    else: 
+        return "MONSTER TABLE ERROR"
 
 
 def horde(engine):
@@ -958,116 +1184,120 @@ def horde(engine):
            sum(engine.roll([6, 6, 6, 6, 6, 6])) * 100,
            sum(engine.roll([6, 6, 6])) * 10)
     die = engine.roll([100])[0]
-    if die <= 4:
-        return ret
-    elif die <= 10:
-        r = "and {} 25 gp art objects".format(sum(engine.roll([4, 4])))
-        return ret + r
-    elif die <= 16:
-        r = "and {} 50 gp art objects".format(sum(engine.roll([6, 6, 6])))
-        return ret + r
-    elif die <= 22:
-        r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
-        return ret + r
-    elif die <= 28:
-        r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
-    elif die <= 32:
-        r = "and {} 25 gp art objects".format(sum(engine.roll([4, 4])))
-        r2 = magic_items(engine, "a", engine.roll([6])[0])
-        return r2 + " and " + ret + r
-    elif die <= 36:
-        r = "and {} 50 gp art objects".format(sum(engine.roll([6, 6, 6])))
-        r2 = magic_items(engine, "a", engine.roll([6])[0])
-        return r2 + " and " + ret + r
-    elif die <= 40:
-        r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
-        r2 = magic_items(engine, "a", engine.roll([6])[0])
-        return r2 + " and " + ret + r
-    elif die <= 44:
-        r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
-        r2 = magic_items(engine, "a", engine.roll([6])[0])
-        return r2 + " and " + ret + r
-    elif die <= 49:
-        r = "and {} 25 gp art objects".format(sum(engine.roll([4, 4])))
-        r2 = magic_items(engine, "b", engine.roll([4])[0])
-        return r2 + " and " + ret + r
-    elif die <= 54:
-        r = "and {} 50 gp art objects".format(sum(engine.roll([6, 6, 6])))
-        r2 = magic_items(engine, "b", engine.roll([4])[0])
-        return r2 + " and " + ret + r
-    elif die <= 59:
-        r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
-        r2 = magic_items(engine, "b", engine.roll([4])[0])
-        return r2 + " and " + ret + r
-    elif die <= 63:
-        r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
-        r2 = magic_items(engine, "b", engine.roll([4])[0])
-        return r2 + " and " + ret + r
-    elif die <= 66:
-        r = "and {} 25 gp art objects".format(sum(engine.roll([4, 4])))
-        r2 = magic_items(engine, "c", engine.roll([4])[0])
-        return r2 + " and " + ret + r
-    elif die <= 69:
-        r = "and {} 50 gp art objects".format(sum(engine.roll([6, 6, 6])))
-        r2 = magic_items(engine, "c", engine.roll([4])[0])
-        return r2 + " and " + ret + r
-    elif die <= 72:
-        r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
-        r2 = magic_items(engine, "c", engine.roll([4])[0])
-        return r2 + " and " + ret + r
-    elif die <= 74:
-        r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
-        r2 = magic_items(engine, "c", engine.roll([4])[0])
-        return r2 + " and " + ret + r
-    elif die <= 76:
-        r = "and {} 25 gp art objects".format(sum(engine.roll([4, 4])))
-        r2 = magic_items(engine, "d", 1)
-        return r2 + " and " + ret + r
-    elif die <= 78:
-        r = "and {} 50 gp art objects".format(sum(engine.roll([6, 6, 6])))
-        r2 = magic_items(engine, "d", 1)
-        return r2 + " and " + ret + r
-    elif die <= 79:
-        r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
-        r2 = magic_items(engine, "d", 1)
-        return r2 + " and " + ret + r
-    elif die <= 80:
-        r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
-        r2 = magic_items(engine, "d", 1)
-        return r2 + " and " + ret + r
-    elif die <= 84:
-        r = "and {} 25 gp art objects".format(sum(engine.roll([4, 4])))
-        r2 = magic_items(engine, "f", engine.roll([4])[0])
-        return r2 + " and " + ret + r
-    elif die <= 88:
-        r = "and {} 50 gp art objects".format(sum(engine.roll([6, 6, 6])))
-        r2 = magic_items(engine, "f", engine.roll([4])[0])
-        return r2 + " and " + ret + r
-    elif die <= 91:
-        r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
-        r2 = magic_items(engine, "f", engine.roll([4])[0])
-        return r2 + " and " + ret + r
-    elif die <= 94:
-        r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
-        r2 = magic_items(engine, "f", engine.roll([4])[0])
-        return r2 + " and " + ret + r
-    elif die <= 96:
-        r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
-        r2 = magic_items(engine, "g", engine.roll([4])[0])
-        return r2 + " and " + ret + r
-    elif die <= 98:
-        r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
-        r2 = magic_items(engine, "g", engine.roll([4])[0])
-        return r2 + " and " + ret + r
-    elif die <= 99:
-        r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
-        r2 = magic_items(engine, "h", 1)
-        return r2 + " and " + ret + r
-    elif die <= 100:
-        r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
-        r2 = magic_items(engine, "h", 1)
-        return r2 + " and " + ret + r
-
+    try:
+        if die <= 4:
+            return ret
+        elif die <= 10:
+            r = "and {} 25 gp art objects".format(sum(engine.roll([4, 4])))
+            return ret + r
+        elif die <= 16:
+            r = "and {} 50 gp art objects".format(sum(engine.roll([6, 6, 6])))
+            return ret + r
+        elif die <= 22:
+            r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
+            return ret + r
+        elif die <= 28:
+            r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
+        elif die <= 32:
+            r = "and {} 25 gp art objects".format(sum(engine.roll([4, 4])))
+            r2 = magic_items(engine, "a", engine.roll([6])[0])
+            return r2 + " and " + ret + r
+        elif die <= 36:
+            r = "and {} 50 gp art objects".format(sum(engine.roll([6, 6, 6])))
+            r2 = magic_items(engine, "a", engine.roll([6])[0])
+            return r2 + " and " + ret + r
+        elif die <= 40:
+            r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
+            r2 = magic_items(engine, "a", engine.roll([6])[0])
+            return r2 + " and " + ret + r
+        elif die <= 44:
+            r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
+            r2 = magic_items(engine, "a", engine.roll([6])[0])
+            return r2 + " and " + ret + r
+        elif die <= 49:
+            r = "and {} 25 gp art objects".format(sum(engine.roll([4, 4])))
+            r2 = magic_items(engine, "b", engine.roll([4])[0])
+            return r2 + " and " + ret + r
+        elif die <= 54:
+            r = "and {} 50 gp art objects".format(sum(engine.roll([6, 6, 6])))
+            r2 = magic_items(engine, "b", engine.roll([4])[0])
+            return r2 + " and " + ret + r
+        elif die <= 59:
+            r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
+            r2 = magic_items(engine, "b", engine.roll([4])[0])
+            return r2 + " and " + ret + r
+        elif die <= 63:
+            r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
+            r2 = magic_items(engine, "b", engine.roll([4])[0])
+            return r2 + " and " + ret + r
+        elif die <= 66:
+            r = "and {} 25 gp art objects".format(sum(engine.roll([4, 4])))
+            r2 = magic_items(engine, "c", engine.roll([4])[0])
+            return r2 + " and " + ret + r
+        elif die <= 69:
+            r = "and {} 50 gp art objects".format(sum(engine.roll([6, 6, 6])))
+            r2 = magic_items(engine, "c", engine.roll([4])[0])
+            return r2 + " and " + ret + r
+        elif die <= 72:
+            r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
+            r2 = magic_items(engine, "c", engine.roll([4])[0])
+            return r2 + " and " + ret + r
+        elif die <= 74:
+            r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
+            r2 = magic_items(engine, "c", engine.roll([4])[0])
+            return r2 + " and " + ret + r
+        elif die <= 76:
+            r = "and {} 25 gp art objects".format(sum(engine.roll([4, 4])))
+            r2 = magic_items(engine, "d", 1)
+            return r2 + " and " + ret + r
+        elif die <= 78:
+            r = "and {} 50 gp art objects".format(sum(engine.roll([6, 6, 6])))
+            r2 = magic_items(engine, "d", 1)
+            return r2 + " and " + ret + r
+        elif die <= 79:
+            r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
+            r2 = magic_items(engine, "d", 1)
+            return r2 + " and " + ret + r
+        elif die <= 80:
+            r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
+            r2 = magic_items(engine, "d", 1)
+            return r2 + " and " + ret + r
+        elif die <= 84:
+            r = "and {} 25 gp art objects".format(sum(engine.roll([4, 4])))
+            r2 = magic_items(engine, "f", engine.roll([4])[0])
+            return r2 + " and " + ret + r
+        elif die <= 88:
+            r = "and {} 50 gp art objects".format(sum(engine.roll([6, 6, 6])))
+            r2 = magic_items(engine, "f", engine.roll([4])[0])
+            return r2 + " and " + ret + r
+        elif die <= 91:
+            r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
+            r2 = magic_items(engine, "f", engine.roll([4])[0])
+            return r2 + " and " + ret + r
+        elif die <= 94:
+            r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
+            r2 = magic_items(engine, "f", engine.roll([4])[0])
+            return r2 + " and " + ret + r
+        elif die <= 96:
+            r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
+            r2 = magic_items(engine, "g", engine.roll([4])[0])
+            return r2 + " and " + ret + r
+        elif die <= 98:
+            r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
+            r2 = magic_items(engine, "g", engine.roll([4])[0])
+            return r2 + " and " + ret + r
+        elif die <= 99:
+            r = "and {} 100 gp art objects".format(sum(engine.roll([6, 6, 6])))
+            r2 = magic_items(engine, "h", 1)
+            return r2 + " and " + ret + r
+        elif die <= 100:
+            r = "and {} 250 gp art objects".format(sum(engine.roll([4, 4])))
+            r2 = magic_items(engine, "h", 1)
+            return r2 + " and " + ret + r
+        else:
+            return "HORDE ERROR"
+    except Exception as e:
+        raise RuntimeError("horde with dice {} raised {}".format(die, e))
 
 def magic_items(engine, table, num):
     objects = []
@@ -1088,6 +1318,8 @@ def magic_items(engine, table, num):
             objects.append(magic_item_g(engine))
         elif table == "h":
             objects.append(magic_item_h(engine))
+        else:
+            return "MAGIC ITEMS TABLE ERROR"
 
     if num == 1:
         return objects[0]
@@ -1098,11 +1330,113 @@ def magic_items(engine, table, num):
 
 
 def magic_item_a(engine):
-    return "an item from table A"
+    die = engine.roll([100])[0]
+    if die <= 50:
+        return "a Potion of Healing"
+    elif die <= 60:
+        return "a Cantrip Spell Scroll"  # Expand This
+    elif die <= 70:
+        return "a Potion of Climbing"
+    elif die <= 90:
+        return "a Spell Scroll (1st level)"  # Expand This
+    elif die <= 94:
+        return "a Spell Scroll (2nd level)"  # Expand This
+    elif die <= 98:
+        return "Potion of Greater Healing"
+    elif die <= 99:
+        return "Bag of Holding"
+    elif die <= 100:
+        return "Driftglobe"
 
 
 def magic_item_b(engine):
-    return "an item from table B"
+    die = engine.roll([100])[0]
+    if die <= 15:
+        return "a Potion of Greater Healing"
+    elif die <= 22:
+        return "a Potion of Fire Breath"
+    elif die <= 29:
+        return "a Potion of Resistance"
+    elif die <= 34:
+        die2 = engine.roll([6])[0]
+        if die2 <= 2:
+            return "a +1 Arrow"
+        elif die2 <= 4:
+            return "a +1 Crossbow Bolt"
+        elif die2 <= 6:
+            return "a +1 Sling Stone"
+    elif die <= 39:
+        return "a Potion of Animal Friendship"
+    elif die <= 44:
+        return "a Potion of Hill Giant Strength"
+    elif die <= 49:
+        return "a Potion of Growth"
+    elif die <= 54:
+        return "a Potion of Water Breathing"
+    elif die <= 59:  # expand
+        return "a 2nd level Spell Scroll"
+    elif die <= 64:  # expand
+        return "a 3rd level Spell Scroll"
+    elif die <= 67:
+        return "a Bag of Holding"
+    elif die <= 70:
+        return "a Container of Keoghtom's Ointment"
+    elif die <= 73:
+        return "a Container of Oil of Slipperiness"
+    elif die <= 75:
+        return "a Bag of Dust of Disappearance"
+    elif die <= 77:
+        return "a Bag of Dust of Dryness"
+    elif die <= 79:
+        return "a Bag of Dust of Sneezing and Choking"
+    elif die <= 81:
+        die2 = engine.roll([4])[0]
+        if die2 <= 1:
+            return "a Blue Sapphire Elemental Gem"
+        elif die2 <= 2:
+            return "a Yellow Diamond Elemental Gem"
+        elif die2 <= 3:
+            return "a Red Corundum Elemental Gem"
+        elif die2 <= 4:
+            return "an Emerald Elemental Gem"
+    elif die <= 83:
+        return "a Philter of Love"
+    elif die <= 84:
+        return "an Alchemy Jug"
+    elif die <= 85:
+        return "a Cap of Water Breathing"
+    elif die <= 86:
+        return "a Cloak of the Manta Ray"
+    elif die <= 87:
+        return "a Driftglobe"
+    elif die <= 88:
+        return "a Pair of Goggles of the Night"
+    elif die <= 89:
+        return "a Helm of Comprehending Languages"
+    elif die <= 90:
+        return "an Immovable Rod"
+    elif die <= 91:
+        return "a Lantern of Revealing"
+    elif die <= 92:  # expand
+        return "Mariner's Armor"
+    elif die <= 93:  # expand
+        return "Mithral Armor"
+    elif die <= 94:
+        return "A Potion of Poison"
+    elif die <= 95:
+        return "A Ring of Swimming"
+    elif die <= 96:
+        return "A Robe of Useful Items"
+    elif die <= 97:
+        return "A Rope of Climbing"
+    elif die <= 98:
+        return "A Saddle of the Cavalier"
+    elif die <= 99:
+        return "A Wand of Magic Detection"
+    elif die <= 100:
+        return "A Wand of Secrets"
+    else:
+        return "AN ERROR IN MAGIC ITEM TABLE B"
 
 
 def magic_item_c(engine):
@@ -1150,6 +1484,8 @@ def treasure(engine):
         return "{} gold and {} platinum pieces".format(
                 sum(engine.roll([6, 6])),
                 sum(engine.roll([6, 6, 6])))
+    else:
+        return "AN ERROR IN TREASURE TABLE"
 
 
 def general_chamber(die):

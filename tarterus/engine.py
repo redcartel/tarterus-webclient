@@ -271,11 +271,25 @@ pending elements:
         for d in self.descriptions:
             if 'type' in d:
                 if d['type'] == 'chamber':
-                    d['description'] = describe_chamber(self, d)
+                    try:
+                        d['description'] = describe_chamber(self, d)
+                    except Exception as e:
+                        d['description'] = "Oops, the room chamber contains\
+{}.\nRoll for initiative to fight the bug. {}".format(e, self.roll_log[-20:])
+
                 elif d['type'] == 'passage':
-                    d['description'] = describe_passage(self, d)
+                    try:
+                        d['description'] = describe_passage(self, d)
+                    except Exception as e:
+                        d['description'] = "Oops, the passage contains\
+ {}.\nRoll for initiative to fight the bug.".format(e)
+
                 elif d['type'] == 'door':
-                    d['description'] = describe_door(self, d)
+                    try:
+                        d['description'] = describe_door(self, d)
+                    except Exception as e:
+                        d['description'] = "Oops, the door contains\
+ {}.\nRoll for initiative to fight the bug.".format(e)
 
 # COMMANDS
 # ['step']                              pop an element & dispatch

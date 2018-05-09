@@ -8,10 +8,10 @@ if __name__ == "__main__":
     w = int(sys.argv[2])
     h = int(sys.argv[3])
     e = int(sys.argv[4])
-    os.system("mkdir static/{}".format(id))
-    statusfile = "static/{}/{}.update".format(id, id)
-    mapfile = "static/{}/{}.map".format(id, id)
-    jsonfile = "static/{}/{}.json".format(id, id)
+    os.system("mkdir static/tmp/{}".format(id))
+    statusfile = "static/tmp/{}/{}.update".format(id, id)
+    mapfile = "static/tmp/{}/{}.map".format(id, id)
+    jsonfile = "static/tmp/{}/{}.json".format(id, id)
     
     with open(statusfile, 'w') as f:
         f.write('0')
