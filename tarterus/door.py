@@ -201,7 +201,7 @@ def dispatch_door(engine, element, dice):
 def describe_door(engine, d):
     dice = engine.roll([20, 20])
     door_description = door_type(dice, d['d'])
-    return "A{}".format(door_description)
+    return door_description
 
 
 def door_type(dice, direction):
@@ -219,22 +219,22 @@ def door_type(dice, direction):
     d_pass = dword[back(direction)] + " / " + dword[direction]
     die = dice[0]
     if die <= 10:
-        return " wooden door going " + d_pass
+        return "<p> A wooden door going " + d_pass + "</p>"
     elif die <= 12:
-        return " wooden door " + lockword + side
+        return "<p> A wooden door " + lockword + side + "</p>"
     elif die <= 13:
-        return " stone door going " + d_pass
+        return "<p> A stone door going " + d_pass + "</p>"
     elif die <= 14:
-        return " stone door " + lockword + side
+        return "<p> A stone door " + lockword + side + "</p>"
     elif die <= 15:
-        return "n iron door going " + d_pass
+        return "<p> An iron door going " + d_pass + "</p>"
     elif die <= 16:
-        return "n iron door " + lockword + side
+        return "<p> An iron door " + lockword + side + "</p>"
     elif die <= 17:
-        return " portcullis going " + d_pass
+        return "<p> A portcullis going " + d_pass + "</p>"
     elif die <= 18:
-        return " portcullis locked from the " + side
+        return "<p> A portcullis locked from the " + side + "</p>"
     elif die <= 19:
-        return " secret door going " + d_pass
+        return "<p> A secret door going " + d_pass + "</p>"
     elif die <= 20:
-        return " secret door " + lockword + side
+        return "<p> A secret door " + lockword + side + "</p>"
