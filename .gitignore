@@ -6,3 +6,6 @@ tarterus/__pycache__
 o.txt
 tmp
 static/tmp/*
+myproject.ini
+myprojectenv
+wsgi.py

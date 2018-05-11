@@ -618,7 +618,6 @@ def describe_chamber(engine, d):
 # Build new chart for types of monsters (primary inhabitant etc.)?
 def chamber_contents(engine, die=0):
     die = engine.roll([100])[0]
-    die = 74
     a, b = "", ""
     try:
         if die <= 8:

@@ -7,8 +7,8 @@ if __name__ == "__main__":
     id = sys.argv[1]
     w = int(sys.argv[2])
     h = int(sys.argv[3])
-    e = int(sys.argv[4])
-    os.system("mkdir static/tmp/{}".format(id))
+    e = sys.argv[4]
+    os.system("/bin/mkdir static/tmp/{}".format(id))
     statusfile = "static/tmp/{}/{}.update".format(id, id)
     mapfile = "static/tmp/{}/{}.map".format(id, id)
     jsonfile = "static/tmp/{}/{}.json".format(id, id)

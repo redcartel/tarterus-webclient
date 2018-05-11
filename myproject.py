@@ -5,6 +5,7 @@ from tarterus.engine import Engine
 import json
 from random import getrandbits
 import subprocess
+import os
 
 app = Flask("__name__")
 
@@ -19,6 +20,11 @@ def randmap(w,h):
 def index():
     return render_template("index.html")
 
+
+@app.route("/test_touch")
+def test_touch():
+	os.system("/usr/bin/touch ~/test2")
+	return "ok"
 
 @app.route("/get_bin_map")
 def bin_map():
