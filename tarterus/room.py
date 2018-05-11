@@ -662,12 +662,140 @@ def chamber_contents(engine, die=0):
 
 
 def chamber_trick(engine):
-    return "a trick!"
+    try:
+        die1, die2 = engine.roll([20,100])
+        ret = "There is a trick. "
+        if die1 <= 1:
+            ret += "A book"
+        elif die1 <= 2:
+            ret += "A preserved brain in a jar"
+        elif die1 <= 3:
+            ret += "A burning fire"
+        elif die1 <= 4:
+            ret += "A cracked gem"
+        elif die1 <= 5:
+            ret += "A door"
+        elif die1 <= 6:
+            ret += "A fresco"
+        elif die1 <= 7:
+            ret += "A piece of furniture"
+        elif die1 <= 8:
+            ret += "A glass sculpture"
+        elif die1 <= 9:
+            ret += "A mushroom field"
+        elif die1 <= 10:
+            ret += "A painting"
+        elif die1 <= 11:
+            ret += "A plant or tree"
+        elif die1 <= 12:
+            ret += "A pool of water"
+        elif die1 <= 13:
+            ret += "Runes engraved on the wall"
+        elif die1 <= 14:
+            ret += "A skull"
+        elif die1 <= 15:
+            ret += "A sphere of magical energy"
+        elif die1 <= 16:
+            ret += "A statue"
+        elif die1 <= 17:
+            ret += "A stone obelisk"
+        elif die1 <= 18:
+            ret += "A suit of armor"
+        elif die1 <= 19:
+            if engine.roll([2])[0] <= 1:
+                ret += "A tapestry"
+            else:
+                ret += "A rug"
+        elif die1 <= 20:
+            ret += "A target dummy"
+        else:
+            ret += "A bad die roll"
+
+        if die2 <= 3:
+            return ret + " ages the first person to touch it."
+        elif die2 <= 6:
+            return ret + " when touched animates, or animates a nearby object."
+        elif die2 <= 10:
+            return ret + " asks three skill testing questions. If answered,\
+a reward appears."  # TODO: what kind of reward?
+        elif die2 <= 13:
+            return ret + " bestows a resistance or vulnerability."
+        elif die2 <= 16:
+            return ret + " changes a character's alignment, personality, size,\
+or appearance when touched."
+        elif die2 <= 19:
+            return ret + " transmutes one substance into another, such as\
+gold to lead or metal to brittle crystal."
+        elif die2 <= 22:
+            return ret + " creates a force field."
+        elif die2 <= 26:
+            return ret + " creates an illusion."
+        elif die2 <= 29:
+            die3, die4 = engine.roll([4, 4])
+            return ret + " suppresses magic items for {} hours.".format(
+die3 + die4)
+        elif die2 <= 32:
+            if engine.roll([2])[0] <= 1:
+                return ret + " enlarges characters."
+            else:
+                return ret + " reduces characters."
+        elif die2 <= 35:
+            return ret + " a 'Magic Mouth' speaks a riddle."
+        elif die2 <= 38:
+            return ret + " 'Confusion (save DC 15) targets all characters in 10 ft."
+        elif die2 <= 41:
+            if engine.roll([2])[0] <= 1:
+                return ret + " gives true directions."
+            else:
+                return ret + " gives false directions."
+        elif die2 <= 44:
+            return ret + " grants a 'Wish' (holy shit)."
+        elif die2 <= 47:
+            return ret + " flies around to avoid being touched."
+        elif die2 <= 50:
+            return ret + " casts 'Gaeas' on the characters."
+        elif die2 <= 53:  # TODO: does more
+            return ret + " reverses gravity."
+        elif die2 <= 56:
+            return ret + " induces greed."
+        elif die2 <= 59:
+            return ret + " contains an imprisoned creature."
+        elif die2 <= 62:
+            return ret + " locks the exits. (DC 17)"
+        elif die2 <= 65:
+            return ret + " offers a game of chance for a reward of piece of\
+ information."
+        elif die2 <= 68:
+            return ret + " helps or harms certain types of creatures."
+        elif die2 <= 71:
+            return ret + " casts polymorph on the characters (lasts 1 hour)"
+        elif die2 <= 75:
+            return ret + " presents a puzzle or a riddle"
+        elif die2 <= 78:
+            return ret + " prevents movement"
+        elif die2 <= 81: # TODO: does more
+            return ret + " releases coins & gems"
+        elif die2 <= 84:
+            return ret + " turns into or summons a monster"
+        elif die2 <= 87:
+            return ret + " casts 'Suggestion' on the characters."
+        elif die2 <= 90:
+            return ret + " wails loudly when touched."
+        elif die2 <= 93:
+            return ret + " talks"
+        elif die2 <= 97:
+            return ret + " teleports the characters to another place."
+        elif die2 <= 100:
+            return ret + " swaps two of the characters' minds."
+        else:
+            return " dice problem."
+    except Exception as e:
+        raise RuntimeError("chamber_trick with dice {} {} threw {}.".format(die1, die2, e))
 
 def which_treasure(engine):
     dice = engine.roll([20])
     try:
-        if dice[0] <= 18:
+        if dice[0] <= 17:
             return treasure(engine)
         elif dice[0] <= 20:
             return horde(engine)
@@ -675,12 +803,82 @@ def which_treasure(engine):
         raise RuntimeError("which_treasure with dice {} threw {}".format(dice, e))
 
 
-def chamber_hazard(engine):
-    return "a hazard!"
-
-
 def chamber_obstacle(engine):
-    return "an obstacle!"
+    die = engine.roll([20])[0]
+    ret = "There is an obstacle: "
+    try:
+        if die <= 1:
+            die2 = engine.roll([10])[0]
+            ret += "There is an antilife aura with radius {} ft. While in the\
+aura, creatures cannot gain hit points.".format(die2 * 10)
+        elif die <= 2:
+            ret += "There are strong winds that reduce speed by half and\
+impose disadvantage on ranged attacks."
+        elif die <= 3:
+            ret += "A 'Blade Barrier' spell blocks a passage."
+        elif die <= 8:
+            if engine.roll([2])[0] <= 1:
+                ret += "There has been a cave-in here. The room is difficult\
+terrain."
+            else:
+                ret += "The ceiling caves in when the players enter the room\
+make a DC 15 Dex save or take 2d10 damage, half as much with a successful\
+save."
+        elif die <= 12:  # TODO: Implement chasms
+            ndice = engine.roll([4, 6, 6])
+            width = ndice[0] * 10
+            depth = ndice[1] * 10 + ndice[2] * 10
+            ret += "There is a chasm {} feet wide and {} feet deep.".format(
+width, depth)
+        elif die <= 14:  # TODO: Implement water
+            ndice = engine.roll([10, 10])
+            depth = ndice[0] + ndice[1]
+            ret += "The floor is sunken in and below {} feet of water.".format(
+depth)
+        elif die <= 15:  # TODO: Implement lava flows
+            ret += "Lava flows through this area!"
+            if engine.roll([2])[0] >= 1:
+                ret += " There is a stone bridge over it."
+        elif die <= 16:
+            ret += "Giant mushrooms must be hacked at to pass through this\
+area."
+        elif die <= 17:
+            ret += "Poisonous gas deals 1d6 damage per minute of exposure."
+        elif die <= 18:
+            ret += "There is a 'Reverse Gravity' spell in effect."
+        elif die <= 19:
+            ret += "A 'Wall of Fire' blocks the area."
+        elif die <= 20:
+            ret += "A 'Wall of Force' blocks the area."
+        else:
+            ret += "the dice messed up."
+        return ret
+    except Exception as e:
+        return "a chamber hazard error on die roll {} with error {}".format(
+            die, e)
+
+
+def chamber_hazard(engine):
+    die = engine.roll([20])[0]
+    ret = "There is a hazard. "
+    try:
+        if die <= 3:
+            return ret + "There is a Brown Mold."
+        elif die <= 8:
+            return ret + "There is a Green Slime."
+        elif die <= 10:
+            return ret + "There is a Shrieker."
+        elif die <= 15:
+            return ret + "There are spiderwebs. DC 15 to see. A creature that steps\
+in to them becomes restrained and must make a DC 20 escape check."
+        elif die <= 17:
+            return ret + "There is a violet fungus."
+        elif die <= 20:
+            return ret + "There is a yellow mold."
+        else:
+            return ret + "Die roll problem."
+    except Exception as e:
+        return "a hazard error with die roll {} with error {}".format(die, e)
 
 
 def chamber_trap(engine):
@@ -1182,7 +1380,7 @@ def horde(engine):
            sum(engine.roll([6, 6])) * 1000,
            sum(engine.roll([6, 6, 6, 6, 6, 6])) * 100,
            sum(engine.roll([6, 6, 6])) * 10)
-    die = engine.roll([100])[0]
+    die = engine.roll([65])[0]
     try:
         if die <= 4:
             return ret
