@@ -621,23 +621,23 @@ def chamber_contents(engine, die=0):
     a, b = "", ""
     try:
         if die <= 8:
-            return "<p>monsters: " + chamber_monster(engine) + "</p>"
+            return "<p>Monsters: " + chamber_monster(engine) + "</p>"
         elif die <= 15:
-            return "<p>monsters: {} with {}.</p>".format(
+            return "<p>Monsters: {}</p> <p> With treasure: {}</p>".format(
                     chamber_monster(engine), which_treasure(engine))
         elif die <= 27:
-            return "<p>monsters: {}.</p>".format(
+            return "<p>Monsters: {}</p>".format(
                     chamber_monster(engine))
         elif die <= 33:
-            return "<p>monsters: {} guarding {}.</p>".format(
+            return "<p>Monsters: {}</p><p>Guarding treasure: {}</p>".format(
                     chamber_monster(engine), which_treasure(engine))
         elif die <= 42:
-            return "<p>monsters: {}.</p>".format(chamber_monster(engine))
+            return "<p>Monsters: {}</p>".format(chamber_monster(engine))
         elif die <= 50:
-            return "<p>monsters: {} with {}.</p>".format(
+            return "<p>Monsters: {}</p><p>With treasure: {}.</p>".format(
                     chamber_monster(engine), which_treasure(engine))
         elif die <= 58:
-            return "<p>" + chamber_hazard(engine) + " and " + treasure(engine) + "</p>"
+            return "<p>" + chamber_hazard(engine) + "</p> <p> And treasure " + treasure(engine) + "</p>"
         elif die <= 63:
             return "<p>" + chamber_obstacle(engine) + "</p>"
         elif die <= 73:
@@ -647,8 +647,7 @@ def chamber_contents(engine, die=0):
             if a is None:
                 raise RuntimeError("None trap!")
             b = which_treasure(engine)
-            return "<p>" + a + " protecting " +\
-                    b + "</p>"
+            return "<p>" + a + "</p> <p>Protecting treasure: " + b + "</p>"
         elif die <= 80:
             return "<p>" + chamber_trick(engine) + "</p>"
         elif die <= 88:
@@ -656,7 +655,7 @@ def chamber_contents(engine, die=0):
         elif die <= 94:
             return "<p>" + chamber_hazard(engine) + "</p>"
         elif die <= 100:
-            return "<p>" + which_treasure(engine) + "</p>"
+            return "<p> Treasure: " + which_treasure(engine) + "</p>"
     except Exception as e:
         raise RuntimeError("describe chamber ({}, {}) with die roll {} raised {}".format(a, b, die, e))
 
@@ -1103,272 +1102,272 @@ def chamber_monster(engine):
     die = dice[0]
 
     if die <= 1:
-        return "1 mind flayer arcanist"
+        return "1 Mind Flayer Arcanist"
     elif die <= 2:
         n = sum(engine.roll([3])) + 1
-        return "{} giant poisonous snakes".format(n)
+        return "{} Giant Poisonous Snakes".format(n)
     elif die <= 3:
         n = sum(engine.roll([3]))
-        return "{} giant lizards".format(n)
+        return "{} Giant Lizards".format(n)
     elif die <= 4:
         n = sum(engine.roll([4, 4]))
-        return "{} giant fire beetles".format(n)
+        return "{} Giant Fire Beetles".format(n)
     elif die <= 5:
         n = sum(engine.roll([8])) + 1
-        return "{} flumphs".format(n)
+        return "{} Flumphs".format(n)
     elif die <= 6:
-        return "1 shrieker"
+        return "1 Shrieker"
     elif die <= 7:
         n = sum(engine.roll([12]))
-        return "{} giant rats".format(n)
+        return "{} Giant Rats".format(n)
     elif die <= 8:
         n = sum(engine.roll([4, 4]))
-        return "{} kobolds".format(n)
+        return "{} Kobolds".format(n)
     elif die <= 9:
         n = sum(engine.roll([8])) + 1
-        return "{} stirges".format(n)
+        return "{} Stirges".format(n)
     elif die <= 10:
         n = sum(engine.roll([4, 4]))
-        return "{} human tribal warriors fleeing the dungeon".format(n)
+        return "{} Human Tribal Warriors fleeing the dungeon".format(n)
     elif die <= 12:
         n = sum(engine.roll([10]))
-        return "{} troglodytes".format(n)
+        return "{} Troglodytes".format(n)
     elif die <= 14:
         n = sum(engine.roll([2]))
-        return "{} gray oozes".format(n)
+        return "{} Gray Oozes".format(n)
     elif die <= 16:
         n = sum(engine.roll([6, 6, 6]))
-        return "{} stirges".format(n)
+        return "{} Stirges".format(n)
     elif die <= 18:
         n = sum(engine.roll([3]))
-        return "{} magma mephits".format(n)
+        return "{} Magma Mephits".format(n)
     elif die <= 20:
         n = sum(engine.roll([10]))
-        return "{} goblins".format(n)
+        return "{} Goblins".format(n)
     elif die <= 22:
-        return "graffiti left by some rude orcs"
+        return "Graffiti left by some rude Orcs"
     elif die <= 24:
-        return "1 insect swarm"
+        return "1 Insect Swarm"
     elif die <= 25:
-        return "1 deep gnome"
+        return "1 Deep Gnome"
     elif die <= 28:
         n = sum(engine.roll([8]))+1
-        return "{} drow".format(n)
+        return "{} Drow".format(n)
     elif die <= 30:
         n = sum(engine.roll([4]))
-        return "{} violet fungi".format(n)
+        return "{} Violet Fungi".format(n)
     elif die <= 32:
         n = sum(engine.roll([12]))
-        return "{} kuo-toa".format(n)
+        return "{} Kuo-Toa".format(n)
     elif die <= 33:
-        return "1 rust monster"
+        return "1 Rust Monster"
     elif die <= 35:
-        return "a rubble strewn passageway that appears to have been cleared\
+        return "a Rubble strewn passageway that appears to have been cleared\
 from a recent cave-in"
     elif die <= 37:
         n = sum(engine.roll([8])) + 1
-        return "{} giant bats".format(n)
+        return "{} Giant Bats".format(n)
     elif die <= 39:
         n = sum(engine.roll([6, 6, 6]))
-        return "{} kobolds".format(n)
+        return "{} Kobolds".format(n)
     elif die <= 41:
         n = sum(engine.roll([4, 4]))
-        return "{} grimlocks".format(n)
+        return "{} Grimlocks".format(n)
     elif die <= 43:
         n = sum(engine.roll([4])) + 3
-        return "{} swarms of bats".format(n)
+        return "{} Swarms of Bats".format(n)
     elif die <= 44:
-        return "one dwarf prospector (a scout) looking for gold"
+        return "one Dwarf prospector (a scout) looking for gold"
     elif die <= 45:
         if dice[1] % 2 == 0:
-            return "1 carrion crawler"
+            return "1 Carrion Crawler"
         else:
-            return "1 gelatinous cube"
+            return "1 Gelatinous Cube"
     elif die <= 46:
         if dice[1] % 2 == 0:
             n = sum(engine.roll([8]))
-            return "{} darkmantles".format(n)
+            return "{} Darkmantles".format(n)
         else:
             n = sum(engine.roll([4, 4]))
-            return "{} piercers".format(n)
+            return "{} Piercers".format(n)
     elif die <= 47:
-        return "one hell hound"
+        return "One Hell Hound"
     elif die <= 48:
         n = sum(engine.roll([3]))
-        return "{} specters".format(n)
+        return "{} Specters".format(n)
     elif die <= 49:
         n = sum(engine.roll([4]))
-        return "{} bugbears".format(n)
+        return "{} Bugbears".format(n)
     elif die <= 50:
         n = sum(engine.roll([10])) + 5
-        return "{} winged kobolds".format(n)
+        return "{} Winged Kobolds".format(n)
     elif die <= 51:
         n = sum(engine.roll([4]))
-        return "{} fire snakes".format(n)
+        return "{} Fire Snakes".format(n)
     elif die <= 52:
         n = sum(engine.roll([8, 8])) + 1
-        return "{} troglodytes".format(n)
+        return "{} Troglodytes".format(n)
     elif die <= 53:
         n = sum(engine.roll([6]))
-        return "{} giant spiders".format(n)
+        return "{} Giant Spiders".format(n)
     elif die <= 54:
         n = sum(engine.roll([6, 6, 6]))
-        return "{} kuo-toa".format(n)
+        return "{} Kuo-Toa".format(n)
     elif die <= 55:
         n = sum(engine.roll([4, 4]))
-        return "one goblin boss and {} goblins".format(n)
+        return "One Goblin Boss and {} Goblins".format(n)
     elif die <= 56:
         n = sum(engine.roll([4, 4, 4, 4]))
-        return "{} grimlocks".format(n)
+        return "{} Grimlocks".format(n)
     elif die <= 57:
-        return "1 ochre jelly"
+        return "1 Ochre Jelly"
     elif die <= 58:
         n = sum(engine.roll([10, 10]))
-        return "{} giant centipedes".format(n)
+        return "{} Giant Centipedes".format(n)
     elif die <= 59:
         if dice[1] % 2 == 0:
-            return "1 nothic"
+            return "1 Nothic"
         else:
-            return "1 giant toad"
+            return "1 Giant Toad"
     elif die <= 60:
         n = sum(engine.roll([4]))
         m = sum(engine.roll([4, 4, 4, 4, 4]))
-        return "{} myconid adults with {} myconid sprouts".format(n, m)
+        return "{} Myconid Adults with {} Myconid Sprouts".format(n, m)
     elif die <= 61:
         if dice[1] % 2 == 0:
-            return "1 minotaur skeleton"
+            return "1 Minotaur Skeleton"
         else:
-            return "1 minotaur"
+            return "1 Minotaur"
     elif die <= 62:
         n = sum(engine.roll([6, 6, 6]))
-        return "{} drow".format(n)
+        return "{} Drow".format(n)
     elif die <= 63:
         if dice[1] % 2 == 0:
-            return "1 mimic"
+            return "1 Mimic"
         else:
-            return "1 doppelganger"
+            return "1 Doppelganger"
     elif die <= 64:
         n = sum(engine.roll([6])) + 3
-        return "{} hobgoblins".format(n)
+        return "{} Hobgoblins".format(n)
     elif die <= 65:
         if dice[1] % 2 == 0:
-            return "1 intellect devourer"
+            return "1 Intellect Devourer"
         else:
-            return "1 spectator"
+            return "1 Spectator"
     elif die <= 66:
         n = sum(engine.roll([8])) + 1
-        return "{} orcs".format(n)
+        return "{} Orcs".format(n)
     elif die <= 68:
-        return "a faint tapping coming from inside a nearby wall"
+        return "a Faint tapping coming from inside a nearby wall"
     elif die <= 69:
         if dice[1] % 2 == 0:
-            return "1 gibbering mouther"
+            return "1 Gibbering Mouther"
         else:
-            return "1 water weird"
+            return "1 Water Weird"
     elif die <= 70:
         n = sum(engine.roll([12]))
-        return "{} gas spores".format(n)
+        return "{} Gas Spores".format(n)
     elif die <= 71:
-        return "1 giant constrictor snake"
+        return "1 Giant Constrictor snake"
     elif die <= 72:
         n = sum(engine.roll([10]))
-        return "{} shadows".format(n)
+        return "{} Shadows".format(n)
     elif die <= 73:
         n = sum(engine.roll([3]))
-        return "{} grells".format(n)
+        return "{} Grells".format(n)
     elif die <= 74:
         n = sum(engine.roll([4]))
-        return "{} wights".format(n)
+        return "{} Wights".format(n)
     elif die <= 75:
         n = sum(engine.roll([8])) + 1
-        return "{} quaggoth spore servants".format(n)
+        return "{} Quaggoth Spore Servants".format(n)
     elif die <= 76:
         n = sum(engine.roll([2]))
-        return "{} gargoyles".format(n)
+        return "{} Gargoyles".format(n)
     elif die <= 77:
         if dice[1] % 2 == 0:
             n = sum(engine.roll([4]))
-            return "{} ogres".format(n)
+            return "{} Ogres".format(n)
         else:
             n = sum(engine.roll([3]))
-            return "{} ettins".format(n)
+            return "{} Ettins".format(n)
     elif die <= 78:
         n = sum(engine.roll([4]))
-        return "{} dwarf explorers (veterans)".format(n)
+        return "{} Dwarf Explorers (Veterans)".format(n)
     elif die <= 80:
         n = sum(engine.roll([3]))
         return "an abandoned miners camp splattered with blood and the \
 contents of {} dungeoneer's packs".format(n)
     elif die <= 81:
         if dice[1] % 2 == 0:
-            return "1 chuul"
+            return "1 Chuul"
         elif dice[1] % 2 == 0:
-            return "1 salamander"
+            return "1 Salamander"
     elif die <= 82:
         if dice[1] % 2 == 0:
             n = sum(engine.roll([4]))
-            return "{} phase spiders".format(n)
+            return "{} Phase Spiders".format(n)
         else:
             n = sum(engine.roll([3]))
-            return "{} hook horrors".format(n)
+            return "{} Hook Horrors".format(n)
     elif die <= 83:
         n = sum(engine.roll([4, 4, 4, 4, 4]))
-        return "{} duergar".format(n)
+        return "{} Duergar".format(n)
     elif die <= 84:
         n = sum(engine.roll([3]))
         if n == 1:
-            return "1 ghost"
+            return "1 Ghost"
         elif n == 2:
-            return "1 flameskull"
+            return "1 Flameskull"
         elif n == 3:
-            return "1 wraith"
+            return "1 Wraith"
     elif die <= 85:
-        return "1 druid with on cave (polar) bear"
+        return "1 Druid with a Cave (Polar) Bear"
     elif die <= 86:
         n = sum(engine.roll([4]))
         m = sum(engine.roll([10, 10]))
-        return "1 hobgoblin captain with {} half-ogres and {} hobgoblins".\
+        return "1 Hobgoblin Captain with {} Half-Ogres and {} Hobgoblins".\
             format(n, m)
     elif die <= 87:
         if dice[1] % 2 == 0:
-            return "1 earth elemental"
+            return "1 Earth Elemental"
         else:
-            return "1 black pudding"
+            return "1 Black Pudding"
     elif die <= 88:
         n = sum(engine.roll([8]))+1
-        return "kuo-toa monitor with {} kuo-toa whips".format(n)
+        return "Kuo-Toa Monitor with {} Kuo-Toa whips".format(n)
     elif die <= 89:
         n = sum(engine.roll([3]))
-        return "1 quaggoth thonot with {} quaggoths".format(n)
+        return "1 Quaggoth Thonot with {} Quaggoths".format(n)
     elif die <= 90:
         if dice[1] % 2 == 0:
-            return "1 beholder zombie"
+            return "1 Beholder Zombie"
         else:
-            return "1 bone naga"
+            return "1 Bone Naga"
     elif die <= 91:
         n = sum(engine.roll([4]))
         m = sum(engine.roll([8, 8]))
-        return "1 orc Eye of Gruumsh with {} orogs and {} orcs".format(n, m)
+        return "1 orc Eye of Gruumsh with {} Orogs and {} Orcs".format(n, m)
     elif die <= 92:
         n = sum(engine.roll([4]))
         m = sum(engine.roll([10]))
-        return "{} ghasts with {} ghouls".format(n, m)
+        return "{} Ghasts with {} Ghouls".format(n, m)
     elif die <= 95:
-        return "A reeking puddle where slimy water has dripped \
+        return "A Reeking Puddle Where Slimy Water has Dripped \
 from the ceiling"
     elif die <= 96:
         if dice[1] % 2 == 0:
-            return "1 otyugh"
+            return "1 Otyugh"
         else:
-            return "1 roper"
+            return "1 Roper"
     elif die <= 97:
-        return "1 vampire spawn"
+        return "1 Vampire Spawn"
     elif die <= 98:
-        return "1 chimera"
+        return "1 Chimera"
     elif die <= 99:
-        return "1 mind flayer"
+        return "1 Mind Flayer"
     elif die <= 100:
-        return "1 spirit naga"
+        return "1 Spirit Naga"
     else: 
         return "MONSTER TABLE ERROR"
 

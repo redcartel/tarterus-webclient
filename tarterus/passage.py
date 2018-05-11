@@ -500,17 +500,17 @@ def dispatch_passage(engine, element, dice):
 def describe_passage(engine, d):
     die = engine.roll([4])[0]
     if d['w'] < 40:
-        return "<b>A {} ft. wide passage.</b>".format(d['w'])
+        return "<p><b>A {} ft. wide passage.</b></p>".format(d['w'])
     if d['w'] >= 40:
         if die <= 1:
-            return("<b>A {} ft. wide passage with a row of\
-pillars down the middle.</b>".format(d['w']))
+            return("<p><b>A {} ft. wide passage with a row of\
+ pillars down the middle.</b></p>".format(d['w']))
         elif die <= 2:
-            return("<b>A {} ft. wide passage with a double row of pillars</b>".
+            return("<p><b>A {} ft. wide passage with a double row of pillars</b></p>".
                    format(d['w']))
         elif die <= 3:
-            return ("<b>A {} ft. wide passage with 20 ft. ceilings</b>".
+            return ("<p><b>A {} ft. wide passage with 20 ft. ceilings</b></p>".
                     format(d['w']))
         elif die <= 4:
-            return ("<b>A {} ft. wide passage with 20 ft. high ceileings and a\
-gallery 10 ft. up with access to the above level.</b>".format(d['w']))
+            return ("<p><b>A {} ft. wide passage with 20 ft. high ceileings and a\
+gallery 10 ft. up with access to the above level.</b></p>".format(d['w']))
