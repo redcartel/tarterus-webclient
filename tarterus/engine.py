@@ -2,14 +2,7 @@ from tarterus.maparray import MapArray
 from tarterus.passage import dispatch_passage, describe_passage
 from tarterus.passage import DICE_ARRAY as passage_dice
 from random import randint
-from tarterus.room import dispatch_room, describe_chamber
-from tarterus.room import DICE_ARRAY as room_dice
-from tarterus.room import dispatch_exit
-from tarterus.room import EXIT_DICE_ARRAY as exit_dice
-from tarterus.door import dispatch_door, describe_door
-from tarterus.door import DICE_ARRAY as door_dice
-from tarterus.start import DICE_ARRAY as start_dice
-from tarterus.start import dispatch_start
+
 import json
 # dispatch_room, dispatch_stairs, grow_room, starting_area
 
